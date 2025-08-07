@@ -94,9 +94,13 @@
                         
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                    <span class="text-white text-sm font-medium">{{ substr($course->teacher->name, 0, 1) }}</span>
-                                </div>
+                                @if($course->teacher->getProfilePictureUrl())
+                                    <img src="{{ $course->teacher->getProfilePictureUrl() }}" alt="{{ $course->teacher->name }}" class="w-8 h-8 rounded-full object-cover">
+                                @else
+                                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                        <span class="text-white text-sm font-medium">{{ substr($course->teacher->name, 0, 1) }}</span>
+                                    </div>
+                                @endif
                                 <span class="text-sm text-gray-600 dark:text-gray-400">{{ $course->teacher->name }}</span>
                             </div>
                             <div class="flex items-center space-x-1">
@@ -115,7 +119,17 @@
                                 @if($course->is_free)
                                     <div class="text-lg font-bold text-green-600">Free</div>
                                 @else
-                                    <div class="text-lg font-bold text-gray-900 dark:text-white">${{ number_format($course->price, 2) }}</div>
+                                    <div class="text-lg font-bold text-gray-900 dark:text-white">
+                                        @auth
+                                            {{ auth()->user()->getCurrencySymbol() }}{{ number_format(\App\Services\CurrencyService::convert($course->price, 'USD', auth()->user()->currency), 2) }}
+                                        @else
+                                            @php
+                                                $convertedPrice = \App\Services\CurrencyService::convert($course->price, 'USD', $userCurrency ?? 'USD');
+                                                $symbol = \App\Services\CurrencyService::getSymbol($userCurrency ?? 'USD');
+                                            @endphp
+                                            {{ $symbol }}{{ number_format($convertedPrice, 2) }}
+                                        @endauth
+                                    </div>
                                 @endif
                             </div>
                             <a href="{{ route('courses.show', $course->slug) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">

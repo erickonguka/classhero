@@ -136,36 +136,7 @@
                     </div>
                 @endif
 
-                <!-- Course Rating -->
-                @auth
-                    @if($isEnrolled)
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8">
-                            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Rate This Course</h2>
-                            <form id="rating-form" class="mb-6">
-                                @csrf
-                                <div class="flex items-center space-x-2 mb-4">
-                                    <span class="text-gray-700 dark:text-gray-300">Your Rating:</span>
-                                    <div class="flex space-x-1" id="star-rating">
-                                        @for($i = 1; $i <= 5; $i++)
-                                            <button type="button" class="star text-2xl text-gray-300 hover:text-yellow-400 transition-colors" data-rating="{{ $i }}">
-                                                ★
-                                            </button>
-                                        @endfor
-                                    </div>
-                                    <input type="hidden" id="rating-value" name="rating" value="0">
-                                </div>
-                                <textarea id="review-comment" name="comment" rows="3" 
-                                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                                          placeholder="Share your thoughts about this course (optional)..."></textarea>
-                                <div class="flex justify-end mt-3">
-                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
-                                        Submit Review
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    @endif
-                @endauth
+
 
                 <!-- Discussions -->
                 @auth
@@ -183,7 +154,7 @@
                             <textarea id="discussion-content" name="content" rows="3" 
                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                       placeholder="Ask a question or share your thoughts about this lesson..."></textarea>
-                            @if(auth()->user()->isTeacher() && auth()->id() == $course->teacher_id)
+                            @if(auth()->user()->isTeacher())
                                 <div class="mt-3">
                                     <label for="media-upload" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Attach Media (Teachers only)</label>
                                     <input type="file" id="media-upload" name="media" accept="image/*,video/*,audio/*,.pdf" 
@@ -387,12 +358,15 @@ $(document).ready(function() {
 
         const formData = new FormData();
         formData.append('content', content);
-        formData.append('parent_id', $('#parent-id').val() || null);
+        const parentId = $('#parent-id').val();
+        if (parentId && parentId !== '') {
+            formData.append('parent_id', parentId);
+        }
         formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
         
-        const mediaFile = $('#media-upload')[0].files[0];
-        if (mediaFile) {
-            formData.append('media', mediaFile);
+        const mediaUpload = $('#media-upload')[0];
+        if (mediaUpload && mediaUpload.files && mediaUpload.files[0]) {
+            formData.append('media', mediaUpload.files[0]);
         }
 
         $.ajax({
@@ -452,6 +426,7 @@ $(document).ready(function() {
                             <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(reply.created_at).toLocaleDateString()}</span>
                         </div>
                         <p class="text-gray-700 dark:text-gray-300 text-sm">${reply.content}</p>
+                        ${reply.has_media ? `<div class="mt-2"><a href="#" class="text-blue-600 text-xs">📎 Media attachment</a></div>` : ''}
                     </div>
                 `;
             });
@@ -469,11 +444,12 @@ $(document).ready(function() {
                     </div>
                 </div>
                 <p class="text-gray-700 dark:text-gray-300 mb-3">${discussion.content}</p>
+                ${discussion.has_media ? `<div class="mb-3"><a href="#" class="text-blue-600 text-sm">📎 Media attachment</a></div>` : ''}
                 <div class="flex items-center space-x-4">
                     <button onclick="replyTo(${discussion.id}, '${discussion.user.name}')" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         Reply
                     </button>
-                    @if(auth()->user()->isTeacher() && auth()->id() == $course->teacher_id)
+                    @if(auth()->user()->isTeacher())
                         <button onclick="moderateComment(${discussion.id})" class="text-red-600 hover:text-red-800 text-sm font-medium">
                             Hide
                         </button>
@@ -496,58 +472,7 @@ $(document).ready(function() {
         $('#reply-info').addClass('hidden');
     });
 
-    // Star rating functionality
-    $('.star').on('click', function() {
-        const rating = $(this).data('rating');
-        $('#rating-value').val(rating);
-        
-        $('.star').each(function(index) {
-            if (index < rating) {
-                $(this).removeClass('text-gray-300').addClass('text-yellow-400');
-            } else {
-                $(this).removeClass('text-yellow-400').addClass('text-gray-300');
-            }
-        });
-    });
 
-    // Rating form submission
-    $('#rating-form').on('submit', function(e) {
-        e.preventDefault();
-        
-        const rating = $('#rating-value').val();
-        const comment = $('#review-comment').val();
-        
-        if (rating == 0) {
-            toastr.error('Please select a rating');
-            return;
-        }
-
-        $.ajax({
-            url: '{{ route("courses.review", $course) }}',
-            method: 'POST',
-            data: {
-                rating: rating,
-                comment: comment,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    toastr.success(response.message);
-                    $('#rating-form')[0].reset();
-                    $('#rating-value').val(0);
-                    $('.star').removeClass('text-yellow-400').addClass('text-gray-300');
-                }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                if (response && response.error) {
-                    toastr.error(response.error);
-                } else {
-                    toastr.error('Error submitting review. Please try again.');
-                }
-            }
-        });
-    });
 
     // Comment moderation
     window.moderateComment = function(discussionId) {
@@ -614,8 +539,9 @@ $(document).ready(function() {
     });
 
     function updateCommentCount() {
-        const userComments = {{ auth()->user()->discussions()->where('lesson_id', $lesson->id)->whereNull('parent_id')->count() }};
-        $('#comment-count').text(`${userComments}/5 comments used`);
+        $.get('{{ route("discussions.count", $lesson) }}', function(data) {
+            $('#comment-count').text(`${data.count}/5 comments used`);
+        });
     }
 
     // Load discussions on page load

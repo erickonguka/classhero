@@ -55,8 +55,8 @@
                 @foreach($courses as $course)
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                         <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
-                            @if($course->getFirstMediaUrl('thumbnails'))
-                                <img src="{{ $course->getFirstMediaUrl('thumbnails') }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                            @if($course->getFirstMediaUrl())
+                                <img src="{{ $course->getFirstMediaUrl() }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
                                     <div class="text-center text-white">
@@ -106,9 +106,13 @@
                             
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center space-x-2">
-                                    <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                        <span class="text-white text-xs font-medium">{{ substr($course->teacher->name, 0, 1) }}</span>
-                                    </div>
+                                    @if($course->teacher->getProfilePictureUrl())
+                                        <img src="{{ $course->teacher->getProfilePictureUrl() }}" alt="{{ $course->teacher->name }}" class="w-6 h-6 rounded-full object-cover">
+                                    @else
+                                        <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-xs font-medium">{{ substr($course->teacher->name, 0, 1) }}</span>
+                                        </div>
+                                    @endif
                                     <span class="text-xs text-gray-600 dark:text-gray-400">{{ $course->teacher->name }}</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
@@ -125,7 +129,16 @@
                                 </div>
                                 @if(!$course->is_free)
                                     <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                        ${{ number_format($course->price, 2) }}
+                                        @auth
+                                            {{ auth()->user()->getCurrencySymbol() }}{{ number_format(\App\Services\CurrencyService::convert($course->price, 'USD', auth()->user()->currency), 2) }}
+                                        @else
+                                            @php
+                                                $guestCurrency = session('guest_currency', 'USD');
+                                                $convertedPrice = \App\Services\CurrencyService::convert($course->price, 'USD', $guestCurrency);
+                                                $symbol = \App\Services\CurrencyService::getSymbol($guestCurrency);
+                                            @endphp
+                                            {{ $symbol }}{{ number_format($convertedPrice, 2) }}
+                                        @endauth
                                     </div>
                                 @endif
                             </div>

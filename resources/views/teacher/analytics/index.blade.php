@@ -199,11 +199,20 @@ const enrollmentChart = new Chart(ctx, {
             y: {
                 beginAtZero: true,
                 min: 0,
+                reverse: false,
                 ticks: {
                     stepSize: 1,
                     callback: function(value) {
                         return Math.floor(value);
                     }
+                },
+                grid: {
+                    display: true
+                }
+            },
+            x: {
+                grid: {
+                    display: false
                 }
             }
         }

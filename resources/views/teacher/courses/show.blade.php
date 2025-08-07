@@ -18,13 +18,23 @@
                 <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                     Add Lesson
                 </a>
-                <a href="{{ route('teacher.courses.comments', $course) }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                    Manage Comments
-                    @if($course->lessons->sum(function($lesson) { return $lesson->discussions()->where('status', 'pending')->count(); }) > 0)
-                        <span class="ml-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                            {{ $course->lessons->sum(function($lesson) { return $lesson->discussions()->where('status', 'pending')->count(); }) }}
-                        </span>
-                    @endif
+                @if($course->status === 'draft' && $course->canBePublished())
+                    <form action="{{ route('teacher.courses.publish', $course) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Submit for Approval
+                        </button>
+                    </form>
+                @elseif($course->status === 'draft')
+                    <button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg font-medium cursor-not-allowed" title="Add at least 1 lesson to publish">
+                        Submit for Approval
+                    </button>
+                @endif
+                <a href="{{ route('teacher.courses.students', $course) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Students ({{ $course->enrollments->count() }})
+                </a>
+                <a href="{{ route('teacher.courses.payments', $course) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Payments
                 </a>
             </div>
         </div>

@@ -85,7 +85,9 @@ class CourseController extends Controller
     {
         $course->load(['teacher', 'category', 'lessons' => function($query) {
             $query->where('is_published', true)->orderBy('order');
-        }, 'reviews.user', 'enrollments.user']);
+        }, 'reviews' => function($query) {
+            $query->with('user')->latest();
+        }, 'enrollments.user']);
 
         // Update course stats
         $course->enrolled_count = $course->enrollments()->count();

@@ -11,8 +11,8 @@ class DiscussionController extends Controller
 {
     public function moderate(Discussion $discussion)
     {
-        // Check if teacher owns the course
-        if (Auth::id() !== $discussion->lesson->course->teacher_id) {
+        // Check if user is a teacher
+        if (!Auth::user()->isTeacher()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

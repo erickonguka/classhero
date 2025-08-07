@@ -28,6 +28,9 @@ class User extends Authenticatable implements HasMedia
         'bio',
         'points',
         'preferred_categories',
+        'country_code',
+        'phone',
+        'currency',
     ];
 
     /**
@@ -86,6 +89,16 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(QuizAttempt::class);
     }
 
+    public function discussions()
+    {
+        return $this->hasMany(Discussion::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
     // Helper methods
     public function isAdmin()
     {
@@ -100,5 +113,34 @@ class User extends Authenticatable implements HasMedia
     public function isLearner()
     {
         return $this->role === 'learner';
+    }
+
+    public function getProfilePictureUrl()
+    {
+        $url = $this->getFirstMediaUrl('profile_pictures');
+        return $url ? asset($url) : null;
+    }
+
+    public function getCurrencySymbol()
+    {
+        $symbols = [
+            'USD' => '$', 'EUR' => '€', 'GBP' => '£', 'JPY' => '¥', 'CAD' => 'C$',
+            'AUD' => 'A$', 'CNY' => '¥', 'INR' => '₹', 'BRL' => 'R$', 'ZAR' => 'R',
+            'NGN' => '₦', 'KES' => 'KSh', 'EGP' => 'E£', 'SAR' => 'SR', 'AED' => 'د.إ',
+            'SGD' => 'S$', 'MYR' => 'RM', 'THB' => '฿', 'PHP' => '₱', 'IDR' => 'Rp',
+            'KRW' => '₩', 'TWD' => 'NT$', 'HKD' => 'HK$', 'PKR' => 'Rs'
+        ];
+        return $symbols[$this->currency] ?? '$';
+    }
+
+    public function getCountryName()
+    {
+        $countries = [
+            'US' => 'United States', 'GB' => 'United Kingdom', 'CA' => 'Canada',
+            'AU' => 'Australia', 'DE' => 'Germany', 'FR' => 'France', 'IN' => 'India',
+            'NG' => 'Nigeria', 'ZA' => 'South Africa', 'BR' => 'Brazil',
+            'JP' => 'Japan', 'CN' => 'China'
+        ];
+        return $countries[$this->country_code] ?? $this->country_code;
     }
 }

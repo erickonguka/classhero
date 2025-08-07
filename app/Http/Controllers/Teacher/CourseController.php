@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Category;
 use App\Models\Discussion;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -185,5 +186,44 @@ class CourseController extends Controller
 
         $discussion->update(['status' => 'rejected']);
         return response()->json(['success' => true, 'message' => 'Comment rejected']);
+    }
+
+    public function publish(Course $course)
+    {
+        $this->authorize('update', $course);
+        
+        if (!$course->canBePublished()) {
+            return back()->with('error', 'Course must have at least 1 lesson to be published.');
+        }
+        
+        $course->update(['status' => 'pending']);
+        return back()->with('success', 'Course submitted for admin approval!');
+    }
+
+    public function students(Course $course)
+    {
+        $this->authorize('view', $course);
+        
+        $enrollments = $course->enrollments()
+            ->with(['user', 'lessonProgress'])
+            ->latest()
+            ->paginate(20);
+            
+        return view('teacher.courses.students', compact('course', 'enrollments'));
+    }
+
+    public function payments(Course $course)
+    {
+        $this->authorize('view', $course);
+        
+        $payments = $course->payments()
+            ->with('user')
+            ->where('status', 'completed')
+            ->latest()
+            ->paginate(20);
+            
+        $totalRevenue = $payments->sum('amount') * 0.7; // 70% to teacher
+        
+        return view('teacher.courses.payments', compact('course', 'payments', 'totalRevenue'));
     }
 }

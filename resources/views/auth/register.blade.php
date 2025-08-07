@@ -2,6 +2,108 @@
 
 @section('title', 'Register')
 
+@push('styles')
+<style>
+.iti {
+    width: 100% !important;
+    position: relative;
+    display: block !important;
+}
+.iti input, .iti__tel-input {
+    width: 100% !important;
+    padding-right: 52px !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+    box-sizing: border-box !important;
+}
+.dark .iti input, .dark .iti__tel-input {
+    border-color: #4b5563 !important;
+    background-color: #374151 !important;
+    color: white !important;
+}
+.iti__flag-container {
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    right: 1px;
+    padding: 0;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+.iti__selected-flag {
+    height: 100%;
+    padding: 0 8px;
+    background-color: transparent;
+    border: none;
+    border-radius: 0 0.5rem 0.5rem 0;
+    display: flex;
+    align-items: center;
+}
+.iti__arrow {
+    margin-left: 6px;
+    width: 0;
+    height: 0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 4px solid #555;
+}
+.iti__country-list {
+    position: absolute;
+    z-index: 1001;
+    list-style: none;
+    text-align: left;
+    padding: 0;
+    margin: 0 0 0 -1px;
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+    background-color: white;
+    border: 1px solid #CCC;
+    white-space: nowrap;
+    max-height: 200px;
+    overflow-y: scroll;
+    border-radius: 8px;
+    display: none;
+}
+.iti__country-list.iti__country-list--dropup {
+    bottom: 100%;
+    margin-bottom: -1px;
+}
+.iti__flag-box {
+    display: inline-block;
+    width: 20px;
+}
+.iti__country {
+    padding: 5px 10px;
+    outline: none;
+}
+.iti__country.iti__highlight {
+    background-color: rgba(0,0,0,0.05);
+}
+.iti__country-name {
+    margin-left: 6px;
+}
+.iti__dial-code {
+    color: #999;
+}
+.dark .iti__country-list {
+    background-color: #374151;
+    border-color: #4B5563;
+}
+.dark .iti__country {
+    color: #F9FAFB;
+}
+.dark .iti__country.iti__highlight {
+    background-color: #4B5563;
+}
+.dark .iti__arrow {
+    border-top-color: #9CA3AF;
+}
+</style>
+@endpush
+
+
+
 @section('content')
 <div class="min-h-screen bg-gradient-to-br from-green-50 via-blue-100 to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -41,6 +143,19 @@
                            class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
                            placeholder="Enter your email">
                     @error('email')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Phone Number
+                    </label>
+                    <input id="phone" name="phone" type="tel" value="{{ old('phone') }}"
+                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors">
+                    <input type="hidden" id="country_code" name="country_code" value="{{ old('country_code') }}">
+                    @error('phone')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -130,14 +245,95 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js"></script>
 <script>
-document.getElementById('role').addEventListener('change', function() {
-    const categoriesSection = document.getElementById('categories-section');
-    if (this.value === 'learner') {
-        categoriesSection.classList.remove('hidden');
-    } else {
-        categoriesSection.classList.add('hidden');
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.querySelector('#phone');
+    const countryCodeInput = document.querySelector('#country_code');
+    
+    if (phoneInput) {
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: "auto",
+            separateDialCode: true,
+            formatOnDisplay: true,
+            nationalMode: false,
+            autoPlaceholder: "aggressive",
+            geoIpLookup: function(callback) {
+                fetch('https://ipapi.co/json/')
+                    .then(res => res.json())
+                    .then(data => {
+                        const countryCode = (data && data.country_code) ? data.country_code.toLowerCase() : 'us';
+                        callback(countryCode);
+                        setTimeout(() => {
+                            const selectedCountry = iti.getSelectedCountryData();
+                            if (selectedCountry) {
+                                countryCodeInput.value = selectedCountry.iso2.toUpperCase();
+                                updateCurrency(selectedCountry.iso2.toUpperCase());
+                            }
+                        }, 100);
+                    })
+                    .catch(() => {
+                        callback('us');
+                        setTimeout(() => {
+                            countryCodeInput.value = 'US';
+                            updateCurrency('US');
+                        }, 100);
+                    });
+            },
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js"
+        });
+        
+        phoneInput.addEventListener('countrychange', function() {
+            const countryData = iti.getSelectedCountryData();
+            if (countryData) {
+                countryCodeInput.value = countryData.iso2.toUpperCase();
+                updateCurrency(countryData.iso2.toUpperCase());
+            }
+        });
+        
+        function updateCurrency(countryCode) {
+            const currencyMap = {
+                'US': 'USD', 'CA': 'CAD', 'GB': 'GBP', 'AU': 'AUD', 'NZ': 'NZD',
+                'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR', 'NL': 'EUR',
+                'JP': 'JPY', 'CN': 'CNY', 'IN': 'INR', 'BR': 'BRL', 'MX': 'MXN',
+                'ZA': 'ZAR', 'NG': 'NGN', 'KE': 'KES', 'EG': 'EGP', 'MA': 'MAD',
+                'RU': 'RUB', 'TR': 'TRY', 'SA': 'SAR', 'AE': 'AED', 'KW': 'KWD',
+                'SG': 'SGD', 'MY': 'MYR', 'TH': 'THB', 'PH': 'PHP', 'ID': 'IDR',
+                'VN': 'VND', 'KR': 'KRW', 'TW': 'TWD', 'HK': 'HKD', 'PK': 'PKR'
+            };
+            
+            const currency = currencyMap[countryCode] || 'USD';
+            let currencyInput = document.querySelector('input[name="currency"]');
+            
+            if (!currencyInput) {
+                currencyInput = document.createElement('input');
+                currencyInput.type = 'hidden';
+                currencyInput.name = 'currency';
+                document.querySelector('form').appendChild(currencyInput);
+            }
+            
+            currencyInput.value = currency;
+        }
+        
+        // Force intl-tel-input to match other input widths
+        setTimeout(() => {
+            const itiContainer = document.querySelector('.iti');
+            if (itiContainer) {
+                itiContainer.classList.add('w-full');
+                itiContainer.style.width = '100%';
+                itiContainer.style.display = 'block';
+            }
+        }, 200);
     }
+
+    document.getElementById('role').addEventListener('change', function() {
+        const categoriesSection = document.getElementById('categories-section');
+        if (this.value === 'learner') {
+            categoriesSection.classList.remove('hidden');
+        } else {
+            categoriesSection.classList.add('hidden');
+        }
+    });
 });
 </script>
 @endsection

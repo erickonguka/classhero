@@ -32,6 +32,7 @@ class Course extends Model implements HasMedia
         'rating_count',
         'requirements',
         'what_you_learn',
+        'has_certificate',
     ];
 
     protected $casts = [
@@ -86,5 +87,15 @@ class Course extends Model implements HasMedia
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    public function canBePublished()
+    {
+        return $this->lessons()->count() >= 1;
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

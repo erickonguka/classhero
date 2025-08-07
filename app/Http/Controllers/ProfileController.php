@@ -2,60 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function edit(Request $request): View
+    public function show()
     {
-        $user = $request->user();
-        $stats = [];
-        
-        if ($user->role === 'learner') {
-            $stats = [
-                'courses_enrolled' => $user->enrollments()->count(),
-                'courses_completed' => $user->enrollments()->where('progress_percentage', 100)->count(),
-                'total_points' => $user->points ?? 0,
-                'certificates' => $user->certificates()->count(),
-            ];
-        } elseif ($user->role === 'teacher') {
-            $stats = [
-                'courses_created' => $user->courses()->count(),
-                'total_students' => $user->courses()->sum('enrolled_count'),
-                'total_revenue' => $user->courses()->where('is_free', false)->sum('price') * 0.7,
-                'avg_rating' => $user->courses()->avg('rating'),
-            ];
-        } elseif ($user->role === 'admin') {
-            $stats = [
-                'total_users' => \App\Models\User::count(),
-                'total_courses' => \App\Models\Course::count(),
-                'total_revenue' => \App\Models\Payment::where('status', 'completed')->sum('amount'),
-                'platform_growth' => \App\Models\User::whereMonth('created_at', now()->month)->count(),
-            ];
-        }
-
-        return view('profile.edit', compact('user', 'stats'));
+        return view('profile.show', ['user' => Auth::user()]);
     }
 
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function edit()
     {
-        $request->user()->fill($request->validated());
-
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
-        }
-
-        $request->user()->save();
-
-        return Redirect::route('profile.edit')->with('success', 'Profile updated successfully!');
+        return view('profile.edit', ['user' => Auth::user()]);
     }
 
-    public function destroy(Request $request): RedirectResponse
+    public function update(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . Auth::id(),
+            'bio' => 'nullable|string|max:1000',
+            'phone' => 'nullable|string|max:25',
+            'country_code' => 'nullable|string|size:2',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $user = Auth::user();
+        $user->update($request->only(['name', 'email', 'bio', 'phone', 'country_code']));
+
+        if ($request->hasFile('profile_picture')) {
+            $user->clearMediaCollection('profile_pictures');
+            $user->addMediaFromRequest('profile_picture')
+                ->toMediaCollection('profile_pictures');
+        }
+
+        return redirect()->route('profile.show')->with('success', 'Profile updated successfully!');
+    }
+
+    public function destroy(Request $request)
     {
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
@@ -70,6 +55,6 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+        return redirect('/')->with('success', 'Your account has been deleted successfully.');
     }
 }

@@ -33,13 +33,14 @@ class VideoTrackingController extends Controller
         ]);
 
         // Check if lesson is completed based on requirements
-        $response = $this->checkLessonCompletion($lesson, $progress);
+        $reviewTrigger = $this->checkLessonCompletion($lesson, $progress);
         
-        if ($response) {
-            return $response;
+        $response = ['success' => true];
+        if ($reviewTrigger) {
+            $response = array_merge($response, $reviewTrigger);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json($response);
     }
 
     private function checkLessonCompletion(Lesson $lesson, LessonProgress $progress)
@@ -65,7 +66,7 @@ class VideoTrackingController extends Controller
             ]);
             
             // Check if review modal should be triggered
-            $this->checkReviewTrigger($lesson, Auth::id());
+            return $this->checkReviewTrigger($lesson, Auth::id());
         }
     }
 
@@ -91,12 +92,14 @@ class VideoTrackingController extends Controller
             }
             
             if ($shouldTrigger) {
-                return response()->json([
+                return [
                     'success' => true,
                     'trigger_review' => true,
                     'course_id' => $course->id
-                ]);
+                ];
             }
         }
+        
+        return null;
     }
 }

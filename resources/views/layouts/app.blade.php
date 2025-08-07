@@ -10,6 +10,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
 
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -123,9 +124,13 @@
                             <!-- User Menu -->
                             <div class="relative" x-data="{ open: false }">
                                 <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                        <span class="text-white text-sm font-medium">{{ substr(auth()->user()->name, 0, 1) }}</span>
-                                    </div>
+                                    @if(auth()->user()->getProfilePictureUrl())
+                                        <img src="{{ auth()->user()->getProfilePictureUrl() }}" alt="{{ auth()->user()->name }}" class="w-8 h-8 rounded-full object-cover">
+                                    @else
+                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-medium">{{ substr(auth()->user()->name, 0, 1) }}</span>
+                                        </div>
+                                    @endif
                                     <span class="hidden md:block">{{ auth()->user()->name }}</span>
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -142,7 +147,7 @@
                                     @elseif(auth()->user()->isAdmin())
                                         <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Admin Panel</a>
                                     @endif
-                                    <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                                    <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
                                     <hr class="my-1 border-gray-200 dark:border-gray-700">
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
@@ -203,7 +208,7 @@
                             Categories
                         </a>
                     @endif
-                    <a href="{{ route('profile.edit') }}" class="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    <a href="{{ route('profile.show') }}" class="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                         Profile
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
@@ -251,10 +256,14 @@
                             </svg>
                             <span class="text-xs mt-1">Progress</span>
                         </a>
-                        <a href="{{ route('profile.edit') }}" class="flex flex-col items-center py-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
+                        <a href="{{ route('profile.show') }}" class="flex flex-col items-center py-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+                            @if(auth()->user()->getProfilePictureUrl())
+                                <img src="{{ auth()->user()->getProfilePictureUrl() }}" alt="{{ auth()->user()->name }}" class="w-6 h-6 rounded-full object-cover">
+                            @else
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            @endif
                             <span class="text-xs mt-1">Profile</span>
                         </a>
                     </div>
@@ -279,6 +288,45 @@
     </div>
 
     @stack('scripts')
+    
+    <!-- Currency Detection for Guests -->
+    @guest
+    <script>
+    // Detect and set guest currency based on location
+    if (!sessionStorage.getItem('currency_detected')) {
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                const countryToCurrency = {
+                    'US': 'USD', 'CA': 'CAD', 'GB': 'GBP', 'AU': 'AUD',
+                    'DE': 'EUR', 'FR': 'EUR', 'IT': 'EUR', 'ES': 'EUR', 'NL': 'EUR',
+                    'JP': 'JPY', 'CN': 'CNY', 'IN': 'INR', 'BR': 'BRL',
+                    'ZA': 'ZAR', 'NG': 'NGN', 'KE': 'KES', 'EG': 'EGP',
+                    'SA': 'SAR', 'AE': 'AED', 'SG': 'SGD', 'MY': 'MYR',
+                    'TH': 'THB', 'PH': 'PHP', 'ID': 'IDR', 'KR': 'KRW',
+                    'TW': 'TWD', 'HK': 'HKD', 'PK': 'PKR'
+                };
+                
+                const currency = countryToCurrency[data.country_code] || 'USD';
+                
+                fetch('/set-currency', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ currency: currency })
+                }).then(() => {
+                    sessionStorage.setItem('currency_detected', 'true');
+                    if (window.location.pathname === '/' || window.location.pathname.includes('courses')) {
+                        window.location.reload();
+                    }
+                });
+            })
+            .catch(() => console.log('Currency detection failed'));
+    }
+    </script>
+    @endguest
     
     <!-- Notifications -->
     <script>

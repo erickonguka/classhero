@@ -35,13 +35,20 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'in:learner,teacher'],
             'preferred_categories' => ['nullable', 'array'],
+            'phone' => ['nullable', 'string', 'max:25'],
+            'country_code' => ['nullable', 'string', 'size:2'],
+            'currency' => ['nullable', 'string', 'size:3'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $request->role,
             'preferred_categories' => $request->preferred_categories ?? [],
+            'phone' => $request->phone,
+            'country_code' => $request->country_code,
+            'currency' => $request->currency ?: 'USD',
         ]);
 
         // Assign role

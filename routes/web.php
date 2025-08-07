@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Discussion routes
     Route::get('/lessons/{lesson}/discussions', [App\Http\Controllers\DiscussionController::class, 'index'])->name('discussions.index');
     Route::post('/lessons/{lesson}/discussions', [App\Http\Controllers\DiscussionController::class, 'store'])->name('discussions.store');
+    Route::get('/lessons/{lesson}/comment-count', [App\Http\Controllers\DiscussionController::class, 'commentCount'])->name('discussions.count');
     
     // Teacher discussion moderation
     Route::post('/discussions/{discussion}/moderate', [App\Http\Controllers\Teacher\DiscussionController::class, 'moderate'])->name('discussions.moderate');
@@ -68,8 +69,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/lessons/{lesson}/video-progress', [App\Http\Controllers\VideoTrackingController::class, 'updateProgress'])->name('lessons.video-progress');
 
     // Profile routes
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Progress routes
@@ -106,6 +108,11 @@ Route::middleware(['auth', 'verified'])->prefix('teacher')->name('teacher.')->gr
     
     // Analytics
     Route::get('/analytics', [App\Http\Controllers\Teacher\AnalyticsController::class, 'index'])->name('analytics');
+    
+    // Course publishing and management
+    Route::post('/courses/{course}/publish', [TeacherCourseController::class, 'publish'])->name('courses.publish');
+    Route::get('/courses/{course}/students', [TeacherCourseController::class, 'students'])->name('courses.students');
+    Route::get('/courses/{course}/payments', [TeacherCourseController::class, 'payments'])->name('courses.payments');
 });
 
 // Admin routes
@@ -129,3 +136,4 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 Route::post('/webhook/payment', [PaymentController::class, 'webhook'])->name('payment.webhook');
 
 require __DIR__.'/auth.php';
+require __DIR__.'/currency.php';

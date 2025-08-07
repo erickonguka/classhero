@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Category;
 use App\Models\User;
+use App\Services\CurrencyService;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -36,6 +37,23 @@ class HomeController extends Controller
             'total_enrollments' => \App\Models\Enrollment::count(),
         ];
 
-        return view('home', compact('featuredCourses', 'categories', 'stats'));
+        // Detect user currency for guests
+        $userCurrency = 'USD';
+        if (!auth()->check()) {
+            $userCurrency = $this->detectGuestCurrency();
+        }
+        
+        return view('home', compact('featuredCourses', 'categories', 'stats', 'userCurrency'));
+    }
+    
+    private function detectGuestCurrency()
+    {
+        // Try to get from session first
+        if (session()->has('guest_currency')) {
+            return session('guest_currency');
+        }
+        
+        // Default to USD
+        return 'USD';
     }
 }
