@@ -44,6 +44,24 @@ class CourseController extends Controller
             }
         }
 
+        // Date filter
+        if ($request->filled('date_filter')) {
+            switch ($request->date_filter) {
+                case 'today':
+                    $query->whereDate('created_at', today());
+                    break;
+                case 'week':
+                    $query->where('created_at', '>=', now()->startOfWeek());
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', now()->startOfMonth());
+                    break;
+                case 'year':
+                    $query->where('created_at', '>=', now()->startOfYear());
+                    break;
+            }
+        }
+
         // Sorting
         $sortBy = $request->get('sort', 'popular');
         switch ($sortBy) {

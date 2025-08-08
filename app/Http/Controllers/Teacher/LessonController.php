@@ -95,6 +95,9 @@ class LessonController extends Controller
             'type' => 'required|in:video,audio,pdf,text',
             'order' => 'required|integer|min:1',
             'duration_minutes' => 'nullable|integer|min:1',
+            'video_url' => 'nullable|url',
+            'audio_file' => 'nullable|mimes:mp3,wav,ogg|max:10240',
+            'pdf_file' => 'nullable|mimes:pdf|max:10240',
             'thumbnail' => 'nullable|image|max:2048',
         ]);
 
@@ -106,12 +109,25 @@ class LessonController extends Controller
             'type' => $request->type,
             'order' => $request->order,
             'duration_minutes' => $request->duration_minutes,
+            'video_url' => $request->video_url,
         ]);
 
         if ($request->hasFile('thumbnail')) {
             $lesson->clearMediaCollection('thumbnails');
             $lesson->addMediaFromRequest('thumbnail')
                    ->toMediaCollection('thumbnails');
+        }
+
+        if ($request->hasFile('audio_file')) {
+            $lesson->clearMediaCollection('audio');
+            $lesson->addMediaFromRequest('audio_file')
+                   ->toMediaCollection('audio');
+        }
+
+        if ($request->hasFile('pdf_file')) {
+            $lesson->clearMediaCollection('pdfs');
+            $lesson->addMediaFromRequest('pdf_file')
+                   ->toMediaCollection('pdfs');
         }
 
         return redirect()->route('teacher.courses.show', $lesson->course)
@@ -184,5 +200,19 @@ class LessonController extends Controller
 
         return redirect()->route('teacher.lessons.show', $lesson)
             ->with('success', 'Quiz created successfully!');
+    }
+
+    public function comments(Lesson $lesson)
+    {
+        if ($lesson->course->teacher_id !== Auth::id()) {
+            abort(403);
+        }
+        
+        $discussions = $lesson->discussions()
+            ->with(['user', 'replies.user'])
+            ->latest()
+            ->paginate(10);
+            
+        return view('teacher.lessons.comments', compact('lesson', 'discussions'));
     }
 }

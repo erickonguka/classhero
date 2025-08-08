@@ -1,15 +1,13 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', 'Teacher Dashboard')
+@section('page-title', 'Dashboard')
 
 @section('content')
-<div class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Teacher Dashboard</h1>
-            <p class="text-gray-600 dark:text-gray-400">Manage your courses and track student progress</p>
-        </div>
+<div class="p-6">
+    <div class="mb-6">
+        <p class="text-gray-600 dark:text-gray-400">Manage your courses and track student progress</p>
+    </div>
 
         <!-- Quick Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -110,6 +108,44 @@
                     </div>
                 </a>
             </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <a href="{{ route('teacher.certifications.index') }}" class="flex items-center p-4 bg-emerald-50 dark:bg-emerald-900 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-800 transition-colors">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white">Certifications</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Approve student completions</p>
+                    </div>
+                </a>
+
+                <a href="{{ route('teacher.quizzes.index') }}" class="flex items-center p-4 bg-indigo-50 dark:bg-indigo-900 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800 transition-colors">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white">Manage Quizzes</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Edit and review quizzes</p>
+                    </div>
+                </a>
+
+                <a href="{{ route('teacher.payments.index') }}" class="flex items-center p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors">
+                    <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white">View Payments</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Track earnings and withdrawals</p>
+                    </div>
+                </a>
+            </div>
         </div>
 
         <!-- Recent Courses -->
@@ -127,15 +163,20 @@
                         @foreach(auth()->user()->courses()->latest()->take(5)->get() as $course)
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3 sm:space-y-0">
                                 <div class="flex items-center space-x-4">
-                                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <span class="text-white font-bold">{{ substr($course->title, 0, 1) }}</span>
-                                    </div>
+                                    @if($course->getFirstMediaUrl('thumbnails'))
+                                        <img src="{{ $course->getFirstMediaUrl('thumbnails') }}" alt="{{ $course->title }}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+                                    @else
+                                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <span class="text-white font-bold">{{ substr($course->title, 0, 1) }}</span>
+                                        </div>
+                                    @endif
                                     <div class="min-w-0 flex-1">
                                         <h3 class="font-semibold text-gray-900 dark:text-white truncate">{{ $course->title }}</h3>
                                         <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
                                             <span>{{ $course->enrolled_count }} students</span>
                                             <span>{{ $course->lessons()->count() }} lessons</span>
                                             <span class="capitalize">{{ $course->status }}</span>
+                                            <span>{{ $course->created_at->format('M d, Y') }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -169,6 +210,5 @@
                 </div>
             @endif
         </div>
-    </div>
 </div>
 @endsection

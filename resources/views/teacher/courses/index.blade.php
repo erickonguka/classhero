@@ -1,14 +1,39 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', 'My Courses')
+@section('page-title', 'My Courses')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Courses</h1>
+<div class="p-6">
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <p class="text-gray-600 dark:text-gray-400">Manage and organize your courses</p>
         <a href="{{ route('teacher.courses.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
             Create New Course
         </a>
+    </div>
+
+    <div class="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4">
+        <form method="GET" class="flex flex-col sm:flex-row gap-3">
+            <input type="text" name="search" value="{{ request('search') }}" 
+                   placeholder="Search courses..." 
+                   class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+            <select name="status" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <option value="">All Status</option>
+                <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
+                <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                <option value="published" {{ request('status') === 'published' ? 'selected' : '' }}>Published</option>
+                <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+            </select>
+            <select name="category_id" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <option value="">All Categories</option>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Filter</button>
+        </form>
     </div>
 
     @if($courses->count() > 0)
@@ -16,8 +41,17 @@
             @foreach($courses as $course)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                     <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
-                        @if($course->getFirstMediaUrl())
-                            <img src="{{ $course->getFirstMediaUrl() }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                        @if($course->getFirstMediaUrl('thumbnails'))
+                            <img src="{{ $course->getFirstMediaUrl('thumbnails') }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center">
+                                <div class="text-center text-white">
+                                    <svg class="w-16 h-16 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                    <p class="text-sm opacity-75">{{ $course->category->name }}</p>
+                                </div>
+                            </div>
                         @endif
                         <div class="absolute top-4 left-4">
                             <span class="bg-{{ $course->category->color ?? 'blue' }}-500 text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -37,20 +71,28 @@
                         
                         <div class="flex items-center justify-between mb-4">
                             <div class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ $course->lessons->count() }} lessons
+                                {{ $course->lessons->count() }} lessons • {{ $course->enrolled_count }} students
                             </div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ $course->enrolled_count }} students
+                                {{ $course->created_at->format('M d, Y') }}
                             </div>
                         </div>
                         
-                        <div class="flex space-x-2">
-                            <a href="{{ route('teacher.courses.show', $course) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
-                                View
+                        <div class="flex space-x-1">
+                            <a href="{{ route('teacher.courses.show', $course) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium text-center transition-colors">
+                                Manage
                             </a>
-                            <a href="{{ route('teacher.courses.edit', $course) }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium text-center transition-colors">
-                                Edit
+                            <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-xs font-medium text-center transition-colors">
+                                Preview
                             </a>
+                            <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" onclick="return confirm('Delete this course?')" 
+                                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors">
+                                    Delete
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -58,7 +100,7 @@
         </div>
 
         <div class="mt-8">
-            {{ $courses->links() }}
+            {{ $courses->appends(request()->query())->links() }}
         </div>
     @else
         <div class="text-center py-12">

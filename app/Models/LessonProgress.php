@@ -16,6 +16,11 @@ class LessonProgress extends Model
         'time_spent',
         'started_at',
         'completed_at',
+        'video_watched_seconds',
+        'video_completed',
+        'quiz_passed',
+        'comment_posted',
+        'pending_approval', // New field
     ];
 
     protected $casts = [
@@ -23,6 +28,10 @@ class LessonProgress extends Model
         'time_spent' => 'integer',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'video_completed' => 'boolean',
+        'quiz_passed' => 'boolean',
+        'comment_posted' => 'boolean',
+        'pending_approval' => 'boolean', // New cast
     ];
 
     public function user()

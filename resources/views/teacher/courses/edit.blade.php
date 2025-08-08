@@ -1,16 +1,17 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', 'Edit Course')
+@section('page-title', 'Edit Course')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Course</h1>
-            <a href="{{ route('teacher.courses.show', $course) }}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+<div class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <a href="{{ route('teacher.courses.show', $course) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm">
                 ← Back to Course
             </a>
         </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
 
         <form action="{{ route('teacher.courses.update', $course) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
@@ -206,6 +207,7 @@
                 </button>
             </div>
         </form>
+        </div>
     </div>
 </div>
 

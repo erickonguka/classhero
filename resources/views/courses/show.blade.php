@@ -44,6 +44,11 @@
                             <span class="font-medium">{{ $course->enrolled_count }}</span>
                             <span class="text-blue-200">students</span>
                         </div>
+                        
+                        <div class="text-white">
+                            <span class="text-blue-200">Created:</span>
+                            <span class="font-medium">{{ $course->created_at->format('M d, Y') }}</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -51,8 +56,8 @@
                 <div class="lg:col-span-1">
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 sticky top-24">
                         <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg mb-6 relative overflow-hidden">
-                            @if($course->getFirstMediaUrl())
-                                <img src="{{ $course->getFirstMediaUrl() }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                            @if($course->getFirstMediaUrl('thumbnails'))
+                                <img src="{{ $course->getFirstMediaUrl('thumbnails') }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
                                     <div class="text-center text-white">
@@ -288,7 +293,8 @@
                         @endif
                         <div class="flex-1">
                             <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ $course->teacher->name }}</h3>
-                            <p class="text-gray-600 dark:text-gray-400 mb-4">Course Instructor</p>
+                            <p class="text-gray-600 dark:text-gray-400 mb-2">Course Instructor</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Member since {{ $course->teacher->created_at->format('M Y') }}</p>
                             
                             <!-- Instructor Stats -->
                             <div class="flex items-center space-x-6 mb-4 text-sm">

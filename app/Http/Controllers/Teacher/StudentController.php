@@ -3,66 +3,36 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\Course;
 use App\Models\Enrollment;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::where('teacher_id', Auth::id())
-            ->with(['enrollments.user'])
-            ->get();
+        $query = Enrollment::whereHas('course', function($q) {
+            $q->where('teacher_id', Auth::id());
+        })->with(['user', 'course']);
 
-        $students = collect();
-        foreach ($courses as $course) {
-            foreach ($course->enrollments as $enrollment) {
-                $students->push([
-                    'user' => $enrollment->user,
-                    'course' => $course,
-                    'enrollment' => $enrollment,
-                ]);
-            }
+        if ($request->search) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
         }
 
-        return view('teacher.students.index', compact('students'));
-    }
-
-    public function show(Course $course)
-    {
-        if ($course->teacher_id !== Auth::id()) {
-            abort(403);
+        if ($request->course_id) {
+            $query->where('course_id', $request->course_id);
         }
 
-        $enrollments = $course->enrollments()
-            ->with(['user', 'user.lessonProgress'])
-            ->paginate(20);
+        $sort = $request->get('sort', 'created_at');
+        $direction = $request->get('direction', 'desc');
+        $query->orderBy($sort, $direction);
 
-        return view('teacher.students.show', compact('course', 'enrollments'));
-    }
+        $enrollments = $query->paginate(20);
+        $courses = Auth::user()->courses;
 
-    public function ban(Enrollment $enrollment)
-    {
-        $course = $enrollment->course;
-        if ($course->teacher_id !== Auth::id()) {
-            abort(403);
-        }
-
-        $enrollment->update(['is_banned' => true]);
-        return response()->json(['success' => true]);
-    }
-
-    public function unban(Enrollment $enrollment)
-    {
-        $course = $enrollment->course;
-        if ($course->teacher_id !== Auth::id()) {
-            abort(403);
-        }
-
-        $enrollment->update(['is_banned' => false]);
-        return response()->json(['success' => true]);
+        return view('teacher.students.index', compact('enrollments', 'courses'));
     }
 }

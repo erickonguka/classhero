@@ -12,10 +12,44 @@
         </div>
 
         @if($enrollments->count() > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Course Stats -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $enrollments->count() }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Total Courses</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $enrollments->where('progress_percentage', 100)->count() }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Completed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ $enrollments->where('progress_percentage', '>', 0)->where('progress_percentage', '<', 100)->count() }}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">In Progress</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">{{ number_format($enrollments->avg('progress_percentage'), 1) }}%</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Avg Progress</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 @foreach($enrollments as $enrollment)
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                         <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                            @if($enrollment->course->getFirstMediaUrl('thumbnails'))
+                                <img src="{{ $enrollment->course->getFirstMediaUrl('thumbnails') }}" alt="{{ $enrollment->course->title }}" class="w-full h-full object-cover">
+                            @else
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <div class="text-center text-white">
+                                        <svg class="w-16 h-16 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                        </svg>
+                                        <p class="text-sm opacity-75">{{ $enrollment->course->category->name }}</p>
+                                    </div>
+                                </div>
+                            @endif
                             <div class="absolute top-4 left-4">
                                 <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                                     {{ $enrollment->course->category->name }}
@@ -51,7 +85,7 @@
                                     <span class="text-xs text-gray-600 dark:text-gray-400">{{ $enrollment->course->teacher->name }}</span>
                                 </div>
                                 <span class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ $enrollment->course->lessons->count() }} lessons
+                                    {{ $enrollment->course->lessons->count() }} lessons • {{ $enrollment->created_at->format('M d, Y') }}
                                 </span>
                             </div>
                             

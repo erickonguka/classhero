@@ -60,31 +60,49 @@ class LessonController extends Controller
             ->first();
 
         if ($progress && !$progress->is_completed) {
-            $progress->update([
-                'is_completed' => true,
-                'completed_at' => now(),
-            ]);
+            $isLastLesson = $lesson->course->lessons()
+                ->where('order', '>=', $lesson->order)
+                ->where('is_published', true)
+                ->count() === 1;
 
-            // Update enrollment progress
-            $enrollment = Auth::user()->enrollments()->where('course_id', $lesson->course_id)->first();
-            if ($enrollment) {
-                $totalLessons = $lesson->course->lessons()->where('is_published', true)->count();
-                $completedLessons = Auth::user()->lessonProgress()
-                    ->whereHas('lesson', function($query) use ($lesson) {
-                        $query->where('course_id', $lesson->course_id);
-                    })
-                    ->where('is_completed', true)
-                    ->count();
+            $completed = true;
 
-                $progressPercentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
+            // Check completion requirements for non-quiz lessons
+            if ($lesson->require_quiz_pass && !$progress->quiz_passed) {
+                $completed = false;
+            }
+            if ($lesson->require_comment && !$progress->comment_posted) {
+                $completed = false;
+            }
 
-                $enrollment->update([
-                    'progress_percentage' => $progressPercentage,
-                    'lessons_completed' => $completedLessons,
+            if ($completed) {
+                $progress->update([
+                    'is_completed' => true,
+                    'completed_at' => now(),
+                    'pending_approval' => $isLastLesson ? true : false, // Set pending approval for last lesson
                 ]);
 
-                // Award points
-                Auth::user()->increment('points', 10);
+                // Update enrollment progress
+                $enrollment = Auth::user()->enrollments()->where('course_id', $lesson->course_id)->first();
+                if ($enrollment) {
+                    $totalLessons = $lesson->course->lessons()->where('is_published', true)->count();
+                    $completedLessons = Auth::user()->lessonProgress()
+                        ->whereHas('lesson', function($query) use ($lesson) {
+                            $query->where('course_id', $lesson->course_id);
+                        })
+                        ->where('is_completed', true)
+                        ->count();
+
+                    $progressPercentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
+
+                    $enrollment->update([
+                        'progress_percentage' => $progressPercentage,
+                        'lessons_completed' => $completedLessons,
+                    ]);
+
+                    // Award points
+                    Auth::user()->increment('points', 10);
+                }
             }
         }
 

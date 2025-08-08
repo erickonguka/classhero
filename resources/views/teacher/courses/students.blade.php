@@ -1,15 +1,13 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', 'Students - ' . $course->title)
+@section('page-title', 'Course Students')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Students</h1>
-            <p class="text-gray-600 dark:text-gray-400">{{ $course->title }}</p>
-        </div>
-        <a href="{{ route('teacher.courses.show', $course) }}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+<div class="p-6">
+    <div class="mb-6">
+        <p class="text-gray-600 dark:text-gray-400">{{ $course->title }}</p>
+        <a href="{{ route('teacher.courses.show', $course) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm">
             ← Back to Course
         </a>
     </div>

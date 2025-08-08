@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
+use App\Models\LessonProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -90,6 +91,57 @@ class QuizController extends Controller
             'time_taken' => now()->diffInSeconds($attempt->started_at),
         ]);
 
+        // Update LessonProgress
+        $progress = LessonProgress::firstOrCreate([
+            'user_id' => Auth::id(),
+            'lesson_id' => $quiz->lesson_id,
+        ]);
+
+        if ($passed) {
+            $progress->update(['quiz_passed' => true]);
+        }
+
+        // Check lesson completion (only quiz and comment required)
+        $lesson = $quiz->lesson;
+        $completed = true;
+
+        // Remove video completion check
+        // if ($lesson->require_video_completion && !$progress->video_completed) {
+        //     $completed = false;
+        // }
+
+        if ($lesson->require_quiz_pass && !$progress->quiz_passed) {
+            $completed = false;
+        }
+
+        if ($lesson->require_comment && !$progress->comment_posted) {
+            $completed = false;
+        }
+
+        if ($completed && !$progress->is_completed) {
+            $progress->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
+
+            // Update enrollment progress
+            $enrollment = $lesson->course->enrollments()->where('user_id', Auth::id())->first();
+            if ($enrollment) {
+                $totalLessons = $lesson->course->lessons()->count();
+                $completedLessons = $lesson->course->lessons()
+                    ->whereHas('progress', fn($query) => $query->where('user_id', Auth::id())->where('is_completed', true))
+                    ->count();
+                $progressPercentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
+
+                $enrollment->update([
+                    'lessons_completed' => $completedLessons,
+                    'total_lessons' => $totalLessons,
+                    'progress_percentage' => $progressPercentage,
+                    'completed_at' => $progressPercentage === 100 ? now() : null,
+                ]);
+            }
+        }
+
         // Award points if passed
         if ($passed) {
             Auth::user()->increment('points', 20);
@@ -99,6 +151,7 @@ class QuizController extends Controller
             'score' => $percentage,
             'passed' => $passed,
             'passing_score' => $quiz->passing_score,
+            'redirect' => route('lessons.show', [$lesson->course->slug, $lesson->slug]),
         ]);
     }
 

@@ -42,21 +42,14 @@ class AnalyticsController extends Controller
             });
 
         // Monthly enrollment trends
-        $monthlyEnrollments = Enrollment::whereHas('course', function($query) use ($teacherId) {
-            $query->where('teacher_id', $teacherId);
-        })
-        ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as count'))
-        ->whereYear('created_at', date('Y'))
-        ->groupBy('month')
-        ->orderBy('month')
-        ->get()
-        ->pluck('count', 'month')
-        ->toArray();
-
-        // Fill missing months with 0
         $enrollmentData = [];
         for ($i = 1; $i <= 12; $i++) {
-            $enrollmentData[] = $monthlyEnrollments[$i] ?? 0;
+            $enrollmentData[] = Enrollment::whereHas('course', function($query) use ($teacherId) {
+                $query->where('teacher_id', $teacherId);
+            })
+            ->whereMonth('created_at', $i)
+            ->whereYear('created_at', now()->year)
+            ->count();
         }
 
         // Recent activity

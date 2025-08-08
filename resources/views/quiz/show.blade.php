@@ -86,6 +86,10 @@
                     <button id="start-quiz" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg transition-colors">
                         {{ $attempts->count() > 0 ? 'Retake Quiz' : 'Start Quiz' }}
                     </button>
+                    <a href="{{ route('lessons.show', [$quiz->lesson->course->slug, $quiz->lesson->slug]) }}" 
+                    class="inline-block ml-4 bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold text-lg transition-colors">
+                        Back to Lesson
+                    </a>
                 @else
                     <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4">
                         <p class="text-red-800 dark:text-red-200">You have reached the maximum number of attempts for this quiz.</p>

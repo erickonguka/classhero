@@ -64,8 +64,8 @@
             @foreach($featuredCourses as $course)
                 <div class="bg-white dark:bg-gray-900 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                     <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
-                        @if($course->getFirstMediaUrl())
-                            <img src="{{ $course->getFirstMediaUrl() }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                        @if($course->getFirstMediaUrl('thumbnails'))
+                            <img src="{{ $course->getFirstMediaUrl('thumbnails') }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
                         @else
                             <div class="w-full h-full flex items-center justify-center">
                                 <div class="text-center text-white">
@@ -114,7 +114,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col">
                                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $course->enrolled_count }} students
+                                    {{ $course->enrolled_count }} students • {{ $course->created_at->format('M d, Y') }}
                                 </div>
                                 @if($course->is_free)
                                     <div class="text-lg font-bold text-green-600">Free</div>

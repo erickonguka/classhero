@@ -9,25 +9,32 @@ use Illuminate\Support\Facades\Auth;
 
 class DiscussionController extends Controller
 {
-    public function moderate(Discussion $discussion)
+    public function reply(Request $request, Discussion $discussion)
     {
-        // Check if user is a teacher
-        if (!Auth::user()->isTeacher()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if ($discussion->lesson->course->teacher_id !== Auth::id()) {
+            abort(403);
         }
 
-        $discussion->update(['status' => 'rejected']);
-        return response()->json(['success' => true, 'message' => 'Comment hidden']);
+        $request->validate([
+            'content' => 'required|string|max:1000',
+        ]);
+
+        $discussion->replies()->create([
+            'user_id' => Auth::id(),
+            'content' => $request->content,
+        ]);
+
+        return redirect()->back()->with('success', 'Reply posted successfully!');
     }
 
-    public function approve(Discussion $discussion)
+    public function resolve(Discussion $discussion)
     {
-        // Check if teacher owns the course
-        if (Auth::id() !== $discussion->lesson->course->teacher_id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if ($discussion->lesson->course->teacher_id !== Auth::id()) {
+            abort(403);
         }
 
-        $discussion->update(['status' => 'approved']);
-        return response()->json(['success' => true, 'message' => 'Comment approved']);
+        $discussion->update(['is_resolved' => true]);
+
+        return redirect()->back()->with('success', 'Discussion marked as resolved!');
     }
 }

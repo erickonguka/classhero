@@ -1,49 +1,67 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', $course->title)
+@section('page-title', $course->title)
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Course Header -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-        <div class="flex justify-between items-start mb-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">{{ $course->title }}</h1>
-                <p class="text-gray-600 dark:text-gray-400">{{ $course->short_description }}</p>
+<div class="p-6">
+    <!-- Course Header with Thumbnail -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
+        @if($course->getFirstMediaUrl('thumbnails'))
+            <div class="h-64 bg-cover bg-center" style="background-image: url('{{ $course->getFirstMediaUrl('thumbnails') }}')">
+                <div class="h-full bg-black bg-opacity-40 flex items-end">
+                    <div class="p-6 text-white">
+                        <h1 class="text-3xl font-bold mb-2">{{ $course->title }}</h1>
+                        <p class="text-gray-200">{{ $course->short_description }}</p>
+                    </div>
+                </div>
             </div>
-            <div class="flex space-x-2">
-                <a href="{{ route('teacher.courses.edit', $course) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                    Edit Course
+        @else
+            <div class="h-64 bg-gradient-to-r from-blue-500 to-purple-600 flex items-end">
+                <div class="p-6 text-white">
+                    <h1 class="text-3xl font-bold mb-2">{{ $course->title }}</h1>
+                    <p class="text-gray-200">{{ $course->short_description }}</p>
+                </div>
+            </div>
+        @endif
+        
+        <div class="p-6">
+            <div class="flex flex-wrap gap-2 mb-4">
+                <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                    Preview
                 </a>
-                <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                <a href="{{ route('teacher.courses.edit', $course) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                    Edit
+                </a>
+                <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
                     Add Lesson
                 </a>
                 @if($course->status === 'draft' && $course->canBePublished())
                     <form action="{{ route('teacher.courses.publish', $course) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                            Submit for Approval
+                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                            Submit
                         </button>
                     </form>
                 @elseif($course->status === 'draft')
-                    <button disabled class="bg-gray-400 text-white px-4 py-2 rounded-lg font-medium cursor-not-allowed" title="Add at least 1 lesson to publish">
-                        Submit for Approval
+                    <button disabled class="bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium cursor-not-allowed" title="Add at least 1 lesson to publish">
+                        Submit
                     </button>
                 @endif
-                <a href="{{ route('teacher.courses.students', $course) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                <a href="{{ route('teacher.courses.students', $course) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
                     Students ({{ $course->enrollments->count() }})
                 </a>
-                <a href="{{ route('teacher.courses.payments', $course) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                <a href="{{ route('teacher.courses.payments', $course) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
                     Payments
                 </a>
             </div>
-        </div>
-        
-        <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-            <span class="bg-{{ $course->category->color ?? 'blue' }}-100 text-{{ $course->category->color ?? 'blue' }}-800 px-2 py-1 rounded">{{ $course->category->name }}</span>
-            <span>{{ ucfirst($course->difficulty) }}</span>
-            <span>{{ $course->is_free ? 'Free' : '$' . number_format($course->price, 2) }}</span>
-            <span class="bg-{{ $course->status === 'published' ? 'green' : 'yellow' }}-100 text-{{ $course->status === 'published' ? 'green' : 'yellow' }}-800 px-2 py-1 rounded">{{ ucfirst($course->status) }}</span>
+            
+            <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400 mt-4">
+                <span class="bg-{{ $course->category->color ?? 'blue' }}-100 text-{{ $course->category->color ?? 'blue' }}-800 px-2 py-1 rounded">{{ $course->category->name }}</span>
+                <span>{{ ucfirst($course->difficulty) }}</span>
+                <span>{{ $course->is_free ? 'Free' : '$' . number_format($course->price, 2) }}</span>
+                <span class="bg-{{ $course->status === 'published' ? 'green' : 'yellow' }}-100 text-{{ $course->status === 'published' ? 'green' : 'yellow' }}-800 px-2 py-1 rounded">{{ ucfirst($course->status) }}</span>
+            </div>
         </div>
     </div>
 
@@ -189,9 +207,13 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                            <span class="text-white text-sm font-medium">{{ substr($enrollment->user->name, 0, 1) }}</span>
-                                        </div>
+                                        @if($enrollment->user->getProfilePictureUrl())
+                                            <img src="{{ $enrollment->user->getProfilePictureUrl() }}" alt="{{ $enrollment->user->name }}" class="w-8 h-8 rounded-full object-cover">
+                                        @else
+                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <span class="text-white text-sm font-medium">{{ substr($enrollment->user->name, 0, 1) }}</span>
+                                            </div>
+                                        @endif
                                         <div class="ml-3">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $enrollment->user->name }}</div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">{{ $enrollment->user->email }}</div>
@@ -229,6 +251,112 @@
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No students enrolled yet</h3>
                 <p class="text-gray-600 dark:text-gray-400">Students will appear here once they enroll in your course</p>
             </div>
+        @endif
+    </div>
+
+    <!-- Course Comments Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Course Comments by Lesson</h2>
+        
+        @if($course->lessons->count() > 0)
+            <div class="space-y-6">
+                @foreach($course->lessons as $lesson)
+                    @php
+                        $discussions = $lesson->discussions()->with('user')->latest()->take(3)->get();
+                    @endphp
+                    
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white">{{ $lesson->title }}</h3>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ $discussions->count() }} comments</span>
+                        </div>
+                        
+                        @if($discussions->count() > 0)
+                            <div class="space-y-3 mb-4">
+                                @foreach($discussions as $discussion)
+                                    <div class="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                        @if($discussion->user->getProfilePictureUrl())
+                                            <img src="{{ $discussion->user->getProfilePictureUrl() }}" alt="{{ $discussion->user->name }}" class="w-8 h-8 rounded-full object-cover">
+                                        @else
+                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <span class="text-white text-xs font-medium">{{ substr($discussion->user->name, 0, 1) }}</span>
+                                            </div>
+                                        @endif
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <span class="font-medium text-sm text-gray-900 dark:text-white">{{ $discussion->user->name }}</span>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $discussion->created_at->diffForHumans() }}</span>
+                                            </div>
+                                            <p class="text-sm text-gray-700 dark:text-gray-300">{{ Str::limit($discussion->content, 100) }}</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            
+                            <a href="{{ route('teacher.lessons.comments', $lesson) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm font-medium">
+                                View all comments →
+                            </a>
+                        @else
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">No comments yet</p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="text-gray-500 dark:text-gray-400">No lessons available</p>
+        @endif
+    </div>
+
+    <!-- Course Comments Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Course Comments by Lesson</h2>
+        
+        @if($course->lessons->count() > 0)
+            <div class="space-y-6">
+                @foreach($course->lessons as $lesson)
+                    @php
+                        $discussions = $lesson->discussions()->with('user')->latest()->take(3)->get();
+                    @endphp
+                    
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold text-gray-900 dark:text-white">{{ $lesson->title }}</h3>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ $discussions->count() }} comments</span>
+                        </div>
+                        
+                        @if($discussions->count() > 0)
+                            <div class="space-y-3 mb-4">
+                                @foreach($discussions as $discussion)
+                                    <div class="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                        @if($discussion->user->getProfilePictureUrl())
+                                            <img src="{{ $discussion->user->getProfilePictureUrl() }}" alt="{{ $discussion->user->name }}" class="w-8 h-8 rounded-full object-cover">
+                                        @else
+                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <span class="text-white text-xs font-medium">{{ substr($discussion->user->name, 0, 1) }}</span>
+                                            </div>
+                                        @endif
+                                        <div class="flex-1">
+                                            <div class="flex items-center space-x-2 mb-1">
+                                                <span class="font-medium text-sm text-gray-900 dark:text-white">{{ $discussion->user->name }}</span>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $discussion->created_at->diffForHumans() }}</span>
+                                            </div>
+                                            <p class="text-sm text-gray-700 dark:text-gray-300">{{ Str::limit($discussion->content, 100) }}</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                            
+                            <a href="{{ route('teacher.lessons.comments', $lesson) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm font-medium">
+                                View all comments →
+                            </a>
+                        @else
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">No comments yet</p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="text-gray-500 dark:text-gray-400">No lessons available</p>
         @endif
     </div>
 </div>

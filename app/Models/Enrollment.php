@@ -19,11 +19,14 @@ class Enrollment extends Model
         'total_lessons',
         'rating',
         'review',
+        'rejection_reason',
+        'rejected_at',
     ];
 
     protected $casts = [
         'enrolled_at' => 'datetime',
         'completed_at' => 'datetime',
+        'rejected_at' => 'datetime',
         'progress_percentage' => 'integer',
         'lessons_completed' => 'integer',
         'total_lessons' => 'integer',
@@ -38,5 +41,15 @@ class Enrollment extends Model
     public function course()
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function lessonProgress()
+    {
+        return $this->hasMany(LessonProgress::class, 'user_id', 'user_id');
+    }
+
+    public function certificate()
+    {
+        return $this->hasOne(Certificate::class);
     }
 }

@@ -9,14 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('courses', function (Blueprint $table) {
-            $table->boolean('has_certificate')->default(false)->after('status');
+            $table->text('rejection_reason')->nullable()->after('status');
+            $table->enum('status', ['draft', 'pending', 'published', 'rejected', 'archived'])->default('draft')->change();
         });
     }
 
     public function down(): void
     {
         Schema::table('courses', function (Blueprint $table) {
-            $table->dropColumn('has_certificate');
+            $table->dropColumn('rejection_reason');
+            $table->enum('status', ['draft', 'published', 'archived'])->default('draft')->change();
         });
     }
 };

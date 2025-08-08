@@ -46,21 +46,15 @@
 
                 <!-- Lesson Content -->
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8">
+                    <div id="lesson-warning" class="hidden text-red-600 text-sm font-medium mb-4"></div>
                     @if($lesson->type === 'video')
                         <div class="mb-6">
                             @if($lesson->video_url)
                                 <div class="aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                                    @if(str_contains($lesson->video_url, 'youtube.com') || str_contains($lesson->video_url, 'youtu.be'))
-                                        <iframe src="{{ $lesson->video_url }}" 
-                                                class="w-full h-full" 
-                                                frameborder="0" 
-                                                allowfullscreen></iframe>
-                                    @else
-                                        <video id="lesson-video" class="w-full h-full" controls data-lesson-id="{{ $lesson->id }}">
-                                            <source src="{{ $lesson->video_url }}" type="video/mp4">
-                                            Your browser does not support the video tag.
-                                        </video>
-                                    @endif
+                                    <div id="player" 
+                                         data-plyr-provider="{{ str_contains($lesson->video_url, 'youtube.com') || str_contains($lesson->video_url, 'youtu.be') ? 'youtube' : 'html5' }}"
+                                         data-plyr-embed-id="{{ $lesson->video_url }}"
+                                         data-lesson-id="{{ $lesson->id }}"></div>
                                 </div>
                             @else
                                 <div class="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -93,6 +87,9 @@
                         </div>
                     @elseif($lesson->type === 'pdf')
                         <div class="mb-6">
+                        @if($lesson->getFirstMediaUrl('pdfs'))
+                            <iframe src="{{ $lesson->getFirstMediaUrl('pdfs') }}" width="100%" height="600px" class="border border-gray-300 dark:border-gray-600 rounded-lg"></iframe>
+                        @else
                             <div id="pdf-viewer" class="border border-gray-300 dark:border-gray-600 rounded-lg" style="height: 600px;">
                                 <div class="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-700 rounded-lg">
                                     <div class="text-center text-gray-500 dark:text-gray-400">
@@ -104,6 +101,7 @@
                                     </div>
                                 </div>
                             </div>
+                        @endif
                         </div>
                     @endif
 
@@ -135,8 +133,6 @@
                         </a>
                     </div>
                 @endif
-
-
 
                 <!-- Discussions -->
                 @auth
@@ -274,28 +270,43 @@
                     </div>
 
                     @auth
-                        @if($lesson->quiz)
-                            <a href="{{ route('quiz.show', $lesson->quiz) }}" 
-                               class="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium text-center block transition-colors">
-                                Take Quiz
-                            </a>
-                        @endif
-                        
-                        @if($progress && $progress->is_completed)
-                            <div class="w-full mt-3 bg-green-500 text-white px-4 py-3 rounded-lg font-medium text-center">
-                                ✓ Completed
-                            </div>
+                    @if($lesson->quiz)
+                        <a href="{{ route('quiz.show', $lesson->quiz) }}" 
+                        class="w-full mt-6 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium text-center block transition-colors">
+                            Take Quiz
+                        </a>
+                    @endif
+                    
+                    @if($progress)
+                        @if($progress->is_completed)
+                            @if($progress->pending_approval)
+                                <div class="w-full mt-3 bg-yellow-500 text-white px-4 py-3 rounded-lg font-medium text-center">
+                                    ✓ Completed (Pending Teacher Approval)
+                                </div>
+                            @else
+                                <div class="w-full mt-3 bg-green-500 text-white px-4 py-3 rounded-lg font-medium text-center">
+                                    ✓ Completed
+                                </div>
+                            @endif
                         @else
-                            <div class="w-full mt-3 bg-gray-400 text-white px-4 py-3 rounded-lg font-medium text-center text-sm">
-                                Complete requirements to unlock
-                            </div>
+                            @if(!$lesson->quiz)
+                                <button onclick="markComplete()" class="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium text-center transition-colors">
+                                    Mark as Complete
+                                </button>
+                            @else
+                                <div class="w-full mt-3 bg-gray-400 text-white px-4 py-3 rounded-lg font-medium text-center text-sm">
+                                    Complete quiz to unlock
+                                </div>
+                            @endif
                         @endif
-                    @endauth
+                    @endif
+                @endauth
                 </div>
             </div>
-        </div>
+        </div> 
     </div>
-</div>
+</div> 
+
 
 @include('components.review-modal')
 @endsection
@@ -303,51 +314,78 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Initialize video player with tracking
-    if ($('#lesson-video').length) {
-        const video = document.getElementById('lesson-video');
-        const lessonId = video.dataset.lessonId;
+    if ($('#player').length) {
+        const videoUrl = $('#player').data('plyr-embed-id');
+        const lessonId = $('#player').data('lesson-id');
+
+        // Use Plyr with encrypted or hidden video URL
+        const player = new Plyr('#player', {
+            controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+            youtube: {
+                noCookie: true,
+                rel: 0,
+                showinfo: 0,
+                modestbranding: 1,
+                controls: 1 // Ensure Plyr controls override YouTube's
+            },
+            source: {
+                type: 'video',
+                sources: [{
+                    src: '/video-stream/' + lessonId, // Proxy endpoint to stream video
+                    provider: 'html5'
+                }]
+            }
+        });
+
+        // Remove these event handlers
+        /*
         let lastTrackedTime = 0;
-        
-        video.addEventListener('timeupdate', function() {
-            const currentTime = Math.floor(video.currentTime);
-            const duration = Math.floor(video.duration);
-            const audioEnabled = !video.muted && video.volume > 0;
-            
-            // Track every 5 seconds
-            if (currentTime - lastTrackedTime >= 5) {
+
+        player.on('timeupdate', function(event) {
+            const currentTime = Math.floor(player.currentTime);
+            const duration = Math.floor(player.duration);
+            const audioEnabled = !player.muted && player.volume > 0;
+
+            if (currentTime - lastTrackedTime >= 5 && duration > 0) {
                 $.post('/lessons/' + lessonId + '/video-progress', {
-                    current_time: currentTime,
+                    current_time: currentTime,a
                     duration: duration,
                     audio_enabled: audioEnabled,
                     _token: $('meta[name="csrf-token"]').attr('content')
                 }).done(function(response) {
+                    $('#lesson-warning').removeClass('hidden').text(response.message);
+                    if (response.video_completed) {
+                        $('#lesson-warning').addClass('hidden');
+                    }
                     if (response.trigger_review) {
                         setTimeout(() => {
                             showReviewModal(response.course_id);
                         }, 2000);
                     }
+                }).fail(function(xhr) {
+                    toastr.error('Error tracking video progress. Please try again.');
                 });
                 lastTrackedTime = currentTime;
             }
         });
-        
-        // Prevent seeking ahead without watching
-        video.addEventListener('seeking', function() {
-            if (video.currentTime > lastTrackedTime + 10) {
-                video.currentTime = lastTrackedTime;
+
+        player.on('seeking', function(event) {
+            if (player.currentTime > lastTrackedTime + 10) {
+                player.currentTime = lastTrackedTime;
             }
         });
-        
-        const player = new Plyr('#lesson-video');
+        */
+
+        // Disable right-click to prevent context menu
+        $('#player').on('contextmenu', function(e) {
+            e.preventDefault();
+        });
     }
 
     // Initialize audio player
     if ($('#lesson-audio').length) {
-        const player = new Plyr('#lesson-audio');
+        const audioPlayer = new Plyr('#lesson-audio');
     }
-
-    // Remove manual complete button - completion is automatic based on requirements
 
     // Discussion form
     $('#discussion-form').on('submit', function(e) {
@@ -419,11 +457,14 @@ $(document).ready(function() {
                 repliesHtml += `
                     <div class="ml-8 mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
                         <div class="flex items-center space-x-2 mb-2">
-                            <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                <span class="text-white text-xs font-medium">${reply.user.name.charAt(0)}</span>
-                            </div>
+                            ${reply.user.profile_picture_url ? 
+                                `<img src="${reply.user.profile_picture_url}" alt="${reply.user.name}" class="w-6 h-6 rounded-full object-cover">` :
+                                `<div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white text-xs font-medium">${reply.user.name.charAt(0)}</span>
+                                </div>`
+                            }
                             <span class="text-sm font-medium text-gray-900 dark:text-white">${reply.user.name}</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(reply.created_at).toLocaleDateString()}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(reply.created_at).toLocaleDateString()} ${new Date(reply.created_at).toLocaleTimeString()}</span>
                         </div>
                         <p class="text-gray-700 dark:text-gray-300 text-sm">${reply.content}</p>
                         ${reply.has_media ? `<div class="mt-2"><a href="#" class="text-blue-600 text-xs">📎 Media attachment</a></div>` : ''}
@@ -435,12 +476,15 @@ $(document).ready(function() {
         return `
             <div class="border-b border-gray-200 dark:border-gray-700 pb-6 mb-6 last:border-b-0">
                 <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span class="text-white text-sm font-medium">${discussion.user.name.charAt(0)}</span>
-                    </div>
+                    ${discussion.user.profile_picture_url ? 
+                        `<img src="${discussion.user.profile_picture_url}" alt="${discussion.user.name}" class="w-8 h-8 rounded-full object-cover">` :
+                        `<div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-medium">${discussion.user.name.charAt(0)}</span>
+                        </div>`
+                    }
                     <div>
                         <span class="font-medium text-gray-900 dark:text-white">${discussion.user.name}</span>
-                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${new Date(discussion.created_at).toLocaleDateString()}</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${new Date(discussion.created_at).toLocaleDateString()} ${new Date(discussion.created_at).toLocaleTimeString()}</span>
                     </div>
                 </div>
                 <p class="text-gray-700 dark:text-gray-300 mb-3">${discussion.content}</p>
@@ -472,9 +516,6 @@ $(document).ready(function() {
         $('#reply-info').addClass('hidden');
     });
 
-
-
-    // Comment moderation
     window.moderateComment = function(discussionId) {
         if (confirm('Are you sure you want to hide this comment?')) {
             $.post('/discussions/' + discussionId + '/moderate', {
@@ -488,7 +529,6 @@ $(document).ready(function() {
         }
     };
 
-    // Review modal functionality
     $('.modal-star').on('click', function() {
         const rating = $(this).data('rating');
         $('#modal-rating-value').val(rating);
@@ -544,16 +584,29 @@ $(document).ready(function() {
         });
     }
 
-    // Load discussions on page load
     @auth
         loadDiscussions();
         updateCommentCount();
     @endauth
-});
 
-// Global function to show review modal
-window.showReviewModal = function(courseId) {
-    $('#review-modal').removeClass('hidden');
-};
+    // Global function to show review modal
+    window.showReviewModal = function(courseId) {
+        $('#review-modal').removeClass('hidden');
+    };
+
+    // Mark lesson as complete
+    window.markComplete = function() {
+        $.post('{{ route("lessons.complete", $lesson) }}', {
+            _token: $('meta[name="csrf-token"]').attr('content')
+        }, function(response) {
+            if (response.success) {
+                toastr.success('Lesson marked as complete!');
+                location.reload();
+            }
+        }).fail(function() {
+            toastr.error('Error marking lesson as complete');
+        });
+    };
+});
 </script>
 @endpush

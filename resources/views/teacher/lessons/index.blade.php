@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', 'Manage Lessons - ' . $course->title)
 

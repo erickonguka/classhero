@@ -15,14 +15,31 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class CourseController extends Controller
 {
     use AuthorizesRequests;
-    public function index()
+    public function index(Request $request)
     {
-        $courses = Course::where('teacher_id', Auth::id())
-            ->with(['category', 'lessons'])
-            ->latest()
-            ->paginate(10);
+        $query = Course::where('teacher_id', Auth::id())
+            ->with(['category', 'lessons']);
 
-        return view('teacher.courses.index', compact('courses'));
+        if ($request->search) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $sort = $request->get('sort', 'created_at');
+        $direction = $request->get('direction', 'desc');
+        $query->orderBy($sort, $direction);
+
+        $courses = $query->paginate(12);
+        $categories = Category::where('is_active', true)->get();
+
+        return view('teacher.courses.index', compact('courses', 'categories'));
     }
 
     public function create()

@@ -10,6 +10,7 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\Teacher\CourseController as TeacherCourseController;
 use App\Http\Controllers\Teacher\LessonController as TeacherLessonController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\CourseController as AdminCourseController;
 use App\Http\Controllers\DiscussionController;
 use Illuminate\Support\Facades\Route;
 
@@ -109,6 +110,23 @@ Route::middleware(['auth', 'verified'])->prefix('teacher')->name('teacher.')->gr
     // Analytics
     Route::get('/analytics', [App\Http\Controllers\Teacher\AnalyticsController::class, 'index'])->name('analytics');
     
+    // Certification management
+    Route::get('/certifications', [App\Http\Controllers\Teacher\CertificationController::class, 'index'])->name('certifications.index');
+    Route::post('/certifications/{enrollment}/approve', [App\Http\Controllers\Teacher\CertificationController::class, 'approve'])->name('certifications.approve');
+    Route::post('/certifications/{enrollment}/reject', [App\Http\Controllers\Teacher\CertificationController::class, 'reject'])->name('certifications.reject');
+    
+    // Quiz management
+    Route::resource('quizzes', App\Http\Controllers\Teacher\QuizController::class)->except(['create', 'store']);
+    
+    // Payment management
+    Route::get('/payments', [App\Http\Controllers\Teacher\PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/statement', [App\Http\Controllers\Teacher\PaymentController::class, 'downloadStatement'])->name('payments.statement');
+    
+    // Lesson comments
+    Route::get('/lessons/{lesson}/comments', [App\Http\Controllers\Teacher\LessonController::class, 'comments'])->name('lessons.comments');
+    Route::post('/discussions/{discussion}/reply', [App\Http\Controllers\Teacher\DiscussionController::class, 'reply'])->name('discussions.reply');
+    Route::post('/discussions/{discussion}/resolve', [App\Http\Controllers\Teacher\DiscussionController::class, 'resolve'])->name('discussions.resolve');
+    
     // Course publishing and management
     Route::post('/courses/{course}/publish', [TeacherCourseController::class, 'publish'])->name('courses.publish');
     Route::get('/courses/{course}/students', [TeacherCourseController::class, 'students'])->name('courses.students');
@@ -130,6 +148,8 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     
     // Course management
     Route::resource('courses', App\Http\Controllers\Admin\CourseController::class);
+    Route::post('/courses/{course}/approve', [App\Http\Controllers\Admin\CourseController::class, 'approve'])->name('courses.approve');
+    Route::post('/courses/{course}/reject', [App\Http\Controllers\Admin\CourseController::class, 'reject'])->name('courses.reject');
 });
 
 // Webhook routes (no auth required)

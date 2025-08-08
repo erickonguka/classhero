@@ -1,16 +1,17 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', 'Edit Lesson')
+@section('page-title', 'Edit Lesson')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Lesson</h1>
-            <a href="{{ route('teacher.courses.show', $lesson->course) }}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+<div class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <a href="{{ route('teacher.courses.show', $lesson->course) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm">
                 ← Back to Course
             </a>
         </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
 
         <form action="{{ route('teacher.lessons.update', $lesson) }}" method="POST" enctype="multipart/form-data">
             @csrf
@@ -55,6 +56,42 @@
                 </div>
             </div>
 
+            <!-- Video URL Field -->
+            <div id="video-url-field" class="mb-6" style="display: {{ old('type', $lesson->type) === 'video' ? 'block' : 'none' }};">
+                <label for="video_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Video URL</label>
+                <input type="url" id="video_url" name="video_url" value="{{ old('video_url', $lesson->video_url) }}"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                       placeholder="https://example.com/video.mp4">
+            </div>
+
+            <!-- Audio Upload Field -->
+            <div id="audio-upload-field" class="mb-6" style="display: {{ old('type', $lesson->type) === 'audio' ? 'block' : 'none' }};">
+                <label for="audio_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Audio File</label>
+                <input type="file" id="audio_file" name="audio_file" accept="audio/*"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                @if($lesson->getFirstMediaUrl('audio'))
+                    <div class="mt-2">
+                        <audio controls class="w-full">
+                            <source src="{{ $lesson->getFirstMediaUrl('audio') }}" type="audio/mpeg">
+                        </audio>
+                    </div>
+                @endif
+            </div>
+
+            <!-- PDF Upload Field -->
+            <div id="pdf-upload-field" class="mb-6" style="display: {{ old('type', $lesson->type) === 'pdf' ? 'block' : 'none' }};">
+                <label for="pdf_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">PDF File</label>
+                <input type="file" id="pdf_file" name="pdf_file" accept=".pdf"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                @if($lesson->getFirstMediaUrl('pdfs'))
+                    <div class="mt-2">
+                        <a href="{{ $lesson->getFirstMediaUrl('pdfs') }}" target="_blank" class="text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                            View Current PDF
+                        </a>
+                    </div>
+                @endif
+            </div>
+
             <div class="mb-6">
                 <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Content</label>
                 <textarea id="content" name="content" rows="8"
@@ -81,6 +118,27 @@
                 </button>
             </div>
         </form>
+        </div>
     </div>
 </div>
+
+<script>
+document.getElementById('type').addEventListener('change', function() {
+    const type = this.value;
+    
+    // Hide all type-specific fields
+    document.getElementById('video-url-field').style.display = 'none';
+    document.getElementById('audio-upload-field').style.display = 'none';
+    document.getElementById('pdf-upload-field').style.display = 'none';
+    
+    // Show relevant field
+    if (type === 'video') {
+        document.getElementById('video-url-field').style.display = 'block';
+    } else if (type === 'audio') {
+        document.getElementById('audio-upload-field').style.display = 'block';
+    } else if (type === 'pdf') {
+        document.getElementById('pdf-upload-field').style.display = 'block';
+    }
+});
+</script>
 @endsection

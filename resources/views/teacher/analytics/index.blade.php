@@ -1,15 +1,10 @@
-@extends('layouts.app')
+@extends('layouts.teacher')
 
 @section('title', 'Teacher Analytics')
+@section('page-title', 'Analytics Dashboard')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
-        <a href="{{ route('teacher.dashboard') }}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
-            ← Back to Dashboard
-        </a>
-    </div>
+<div class="p-6">
 
     <!-- Overview Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -75,7 +70,9 @@
         <!-- Enrollment Trends -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
             <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Monthly Enrollments ({{ date('Y') }})</h2>
-            <canvas id="enrollmentChart" width="400" height="200"></canvas>
+            <div class="h-64">
+                <canvas id="enrollmentChart"></canvas>
+            </div>
         </div>
 
         <!-- Course Performance -->
@@ -128,9 +125,13 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                            <span class="text-white text-sm font-medium">{{ substr($enrollment->user->name, 0, 1) }}</span>
-                                        </div>
+                                        @if($enrollment->user->getProfilePictureUrl())
+                                            <img src="{{ $enrollment->user->getProfilePictureUrl() }}" alt="{{ $enrollment->user->name }}" class="w-8 h-8 rounded-full object-cover">
+                                        @else
+                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <span class="text-white text-sm font-medium">{{ substr($enrollment->user->name, 0, 1) }}</span>
+                                            </div>
+                                        @endif
                                         <div class="ml-3">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $enrollment->user->name }}</div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">{{ $enrollment->user->email }}</div>
@@ -198,8 +199,6 @@ const enrollmentChart = new Chart(ctx, {
         scales: {
             y: {
                 beginAtZero: true,
-                min: 0,
-                reverse: false,
                 ticks: {
                     stepSize: 1,
                     callback: function(value) {

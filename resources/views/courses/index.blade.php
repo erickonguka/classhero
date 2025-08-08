@@ -43,6 +43,28 @@
                     </select>
                 </div>
 
+                <!-- Date Filter -->
+                <div>
+                    <select name="date_filter" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        <option value="">All Time</option>
+                        <option value="today" {{ request('date_filter') == 'today' ? 'selected' : '' }}>Today</option>
+                        <option value="week" {{ request('date_filter') == 'week' ? 'selected' : '' }}>This Week</option>
+                        <option value="month" {{ request('date_filter') == 'month' ? 'selected' : '' }}>This Month</option>
+                        <option value="year" {{ request('date_filter') == 'year' ? 'selected' : '' }}>This Year</option>
+                    </select>
+                </div>
+
+                <!-- Sort Filter -->
+                <div>
+                    <select name="sort" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                        <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>Most Popular</option>
+                        <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest First</option>
+                        <option value="rating" {{ request('sort') == 'rating' ? 'selected' : '' }}>Highest Rated</option>
+                        <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
+                        <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
+                    </select>
+                </div>
+
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
                     Filter
                 </button>
@@ -55,8 +77,8 @@
                 @foreach($courses as $course)
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                         <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
-                            @if($course->getFirstMediaUrl())
-                                <img src="{{ $course->getFirstMediaUrl() }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                            @if($course->getFirstMediaUrl('thumbnails'))
+                                <img src="{{ $course->getFirstMediaUrl('thumbnails') }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
                             @else
                                 <div class="w-full h-full flex items-center justify-center">
                                     <div class="text-center text-white">
@@ -125,7 +147,7 @@
                             
                             <div class="flex items-center justify-between mb-3">
                                 <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ $course->enrolled_count }} students
+                                    {{ $course->enrolled_count }} students • {{ $course->created_at->format('M d, Y') }}
                                 </div>
                                 @if(!$course->is_free)
                                     <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
@@ -164,3 +186,43 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    let timeout;
+    
+    // Reactive filtering
+    $('input[name="search"], select[name="category"], select[name="difficulty"], select[name="date_filter"], select[name="sort"]').on('input change', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(function() {
+            filterCourses();
+        }, 500);
+    });
+    
+    function filterCourses() {
+        const formData = {
+            search: $('input[name="search"]').val(),
+            category: $('select[name="category"]').val(),
+            difficulty: $('select[name="difficulty"]').val(),
+            date_filter: $('select[name="date_filter"]').val(),
+            sort: $('select[name="sort"]').val()
+        };
+        
+        $.get('{{ route("courses.index") }}', formData, function(data) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data, 'text/html');
+            const newContent = doc.querySelector('.grid');
+            const newPagination = doc.querySelector('.flex.justify-center');
+            
+            if (newContent) {
+                $('.grid').replaceWith(newContent);
+            }
+            if (newPagination) {
+                $('.flex.justify-center').replaceWith(newPagination);
+            }
+        });
+    }
+});
+</script>
+@endpush

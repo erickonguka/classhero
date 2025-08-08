@@ -10,65 +10,100 @@ use Illuminate\Support\Facades\Auth;
 class VideoTrackingController extends Controller
 {
     public function updateProgress(Request $request, Lesson $lesson)
-    {
-        $request->validate([
-            'current_time' => 'required|numeric|min:0',
-            'duration' => 'required|numeric|min:0',
-            'audio_enabled' => 'required|boolean',
-        ]);
+{
+    $request->validate([
+        'current_time' => 'nullable|numeric|min:0',
+        'duration' => 'nullable|numeric|min:1',
+        'audio_enabled' => 'nullable|boolean',
+    ]);
 
-        $progress = LessonProgress::firstOrCreate([
-            'user_id' => Auth::id(),
-            'lesson_id' => $lesson->id,
-        ]);
+    $userId = Auth::id();
 
+    $progress = LessonProgress::firstOrCreate([
+        'user_id' => $userId,
+        'lesson_id' => $lesson->id,
+    ]);
+
+    // Only update if data is provided (optional tracking)
+    if ($request->filled('current_time') && $request->filled('duration')) {
         $watchedSeconds = (int) $request->current_time;
         $totalDuration = (int) $request->duration;
-        
-        // Update progress
+        $watchedPercentage = $totalDuration > 0 ? round(($watchedSeconds / $totalDuration) * 100) : 0;
+
         $progress->update([
-            'video_watched_seconds' => max($progress->video_watched_seconds, $watchedSeconds),
-            'audio_enabled' => $request->audio_enabled,
-            'video_completed' => $watchedSeconds >= ($totalDuration * 0.95), // 95% completion
+            'video_watched_seconds' => $watchedSeconds,
+            'audio_enabled' => $request->boolean('audio_enabled'),
+            // Remove video_completed update
         ]);
 
-        // Check if lesson is completed based on requirements
-        $reviewTrigger = $this->checkLessonCompletion($lesson, $progress);
-        
-        $response = ['success' => true];
-        if ($reviewTrigger) {
-            $response = array_merge($response, $reviewTrigger);
-        }
-
-        return response()->json($response);
+        // Optional response for analytics
+        $watchedTimeFormatted = gmdate('i:s', $watchedSeconds);
+        $totalDurationFormatted = gmdate('i:s', $totalDuration);
+        $response = [
+            'success' => true,
+            'watched_percentage' => $watchedPercentage,
+            'watched_time' => $watchedTimeFormatted,
+            'total_duration' => $totalDurationFormatted,
+            'message' => "You have watched {$watchedTimeFormatted} ({$watchedPercentage}%) of {$totalDurationFormatted} (optional).",
+        ];
+    } else {
+        $response = ['success' => true, 'message' => 'No video progress to track.'];
     }
 
-    private function checkLessonCompletion(Lesson $lesson, LessonProgress $progress)
-    {
-        $completed = true;
+    // Check for review trigger without video completion
+    $reviewTrigger = $this->checkLessonCompletion($lesson, $progress);
+    if ($reviewTrigger) {
+        $response = array_merge($response, $reviewTrigger);
+    }
 
-        if ($lesson->require_video_completion && !$progress->video_completed) {
-            $completed = false;
-        }
+    return response()->json($response);
+}
 
-        if ($lesson->require_quiz_pass && !$progress->quiz_passed) {
-            $completed = false;
-        }
+private function checkLessonCompletion(Lesson $lesson, LessonProgress $progress)
+{
+    $completed = true;
 
-        if ($lesson->require_comment && !$progress->comment_posted) {
-            $completed = false;
-        }
+    // Remove video completion check
+    // if ($lesson->require_video_completion && !$progress->video_completed) {
+    //     $completed = false;
+    // }
 
-        if ($completed && !$progress->is_completed) {
-            $progress->update([
-                'is_completed' => true,
-                'completed_at' => now(),
+    if ($lesson->require_quiz_pass && !$progress->quiz_passed) {
+        $completed = false;
+    }
+
+    if ($lesson->require_comment && !$progress->comment_posted) {
+        $completed = false;
+    }
+
+    if ($completed && !$progress->is_completed) {
+        $progress->update([
+            'is_completed' => true,
+            'completed_at' => now(),
+        ]);
+
+        // Update enrollment progress
+        $enrollment = $lesson->course->enrollments()->where('user_id', Auth::id())->first();
+        if ($enrollment) {
+            $totalLessons = $lesson->course->lessons()->count();
+            $completedLessons = $lesson->course->lessons()
+                ->whereHas('progress', fn($query) => $query->where('user_id', Auth::id())->where('is_completed', true))
+                ->count();
+            $progressPercentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
+
+            $enrollment->update([
+                'lessons_completed' => $completedLessons,
+                'total_lessons' => $totalLessons,
+                'progress_percentage' => $progressPercentage,
+                'completed_at' => $progressPercentage === 100 ? now() : null,
             ]);
-            
-            // Check if review modal should be triggered
-            return $this->checkReviewTrigger($lesson, Auth::id());
         }
+
+        return $this->checkReviewTrigger($lesson, Auth::id());
     }
+
+    return null;
+}
 
     private function checkReviewTrigger(Lesson $lesson, $userId)
     {
@@ -79,27 +114,26 @@ class VideoTrackingController extends Controller
             ->where('is_completed', true)
             ->count();
 
-        // Check if user already reviewed
         $hasReviewed = $course->reviews()->where('user_id', $userId)->exists();
-        
+
         if (!$hasReviewed) {
             $shouldTrigger = false;
-            
+
             if ($totalLessons == 1 && $completedLessons == 1) {
                 $shouldTrigger = true;
             } elseif ($totalLessons > 1 && ($completedLessons == 2 || $completedLessons == 3)) {
                 $shouldTrigger = true;
             }
-            
+
             if ($shouldTrigger) {
                 return [
                     'success' => true,
                     'trigger_review' => true,
-                    'course_id' => $course->id
+                    'course_id' => $course->id,
                 ];
             }
         }
-        
+
         return null;
     }
 }

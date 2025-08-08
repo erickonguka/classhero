@@ -19,7 +19,16 @@ class DiscussionController extends Controller
                 $query->where('status', 'approved')->with('user');
             }])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function($discussion) {
+                $discussion->user->profile_picture_url = $discussion->user->getProfilePictureUrl();
+                if ($discussion->replies) {
+                    $discussion->replies->each(function($reply) {
+                        $reply->user->profile_picture_url = $reply->user->getProfilePictureUrl();
+                    });
+                }
+                return $discussion;
+            });
 
         return response()->json(['discussions' => $discussions]);
     }

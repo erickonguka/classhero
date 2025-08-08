@@ -33,6 +33,7 @@ class Course extends Model implements HasMedia
         'requirements',
         'what_you_learn',
         'has_certificate',
+        'rejection_reason',
     ];
 
     protected $casts = [
