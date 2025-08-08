@@ -31,9 +31,53 @@
             </div>
         </div>
 
+        <!-- Filters -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search courses..." 
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                    <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                        <option value="">All Status</option>
+                        <option value="not_started" {{ request('status') === 'not_started' ? 'selected' : '' }}>Not Started</option>
+                        <option value="in_progress" {{ request('status') === 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <select name="category_id" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                        <option value="">All Categories</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Course Progress -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Course Progress</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Course Progress</h2>
+                <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                    <span>Sort by:</span>
+                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'enrolled_at', 'direction' => 'desc']) }}" 
+                       class="{{ request('sort', 'enrolled_at') === 'enrolled_at' ? 'text-blue-600 font-medium' : 'hover:text-blue-600' }}">Recent</a>
+                    <span>|</span>
+                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'progress_percentage', 'direction' => 'desc']) }}" 
+                       class="{{ request('sort') === 'progress_percentage' ? 'text-blue-600 font-medium' : 'hover:text-blue-600' }}">Progress</a>
+                </div>
+            </div>
             
             @if($enrollments->count() > 0)
                 <div class="space-y-6">
@@ -104,17 +148,35 @@
                                     </a>
                                 @endif
                                 
-                                @if($enrollment->progress_percentage == 100 && $enrollment->course->has_certificate)
-                                    <form action="{{ route('certificate.generate', $enrollment->course) }}" method="POST" class="inline">
-                                        @csrf
-                                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                                            Get Certificate
-                                        </button>
-                                    </form>
+                                @if($enrollment->progress_percentage == 100)
+                                    @php
+                                        $certificate = \App\Models\Certificate::where('user_id', auth()->id())
+                                            ->where('course_id', $enrollment->course_id)
+                                            ->first();
+                                    @endphp
+                                    @if($certificate)
+                                        <a href="{{ route('certificate.show', $certificate->id) }}" 
+                                           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                            View Certificate
+                                        </a>
+                                    @elseif($enrollment->completed_at)
+                                        <span class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                            Certificate Processing
+                                        </span>
+                                    @else
+                                        <span class="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                                            Awaiting Teacher Approval
+                                        </span>
+                                    @endif
                                 @endif
                             </div>
                         </div>
                     @endforeach
+                </div>
+                
+                <!-- Pagination -->
+                <div class="mt-8">
+                    {{ $enrollments->appends(request()->query())->links() }}
                 </div>
             @else
                 <div class="text-center py-12">

@@ -82,44 +82,44 @@
 
 @push('scripts')
 <script>
-let questionCount = 0;
+let questionIndex = 0;
 
 $(document).ready(function() {
     // Add first question by default
-    addQuestion();
+    addNewQuestion();
 
-    $('#add-question').on('click', function() {
-        addQuestion();
+    // Handle question type changes
+    $(document).on('change', '.question-type', function() {
+        toggleQuestionOptions($(this));
     });
-
+    
+    // Add new question
+    $('#add-question').on('click', function() {
+        addNewQuestion();
+    });
+    
+    // Remove question
     $(document).on('click', '.remove-question', function() {
         $(this).closest('.question-item').remove();
         updateQuestionNumbers();
     });
-
-    $(document).on('change', '.question-type', function() {
-        const questionItem = $(this).closest('.question-item');
-        const type = $(this).val();
-        const optionsContainer = questionItem.find('.options-container');
-        
-        if (type === 'multiple_choice') {
-            optionsContainer.show();
-            optionsContainer.find('input').attr('required', true);
-        } else {
-            optionsContainer.hide();
-            optionsContainer.find('input').attr('required', false);
-        }
-    });
-
+    
+    // Add option for multiple choice
     $(document).on('click', '.add-option', function() {
+        const questionIndex = $(this).data('question');
         const optionsList = $(this).siblings('.options-list');
         const optionCount = optionsList.children().length;
         
         optionsList.append(`
             <div class="flex items-center space-x-2 mb-2">
-                <input type="text" name="questions[${$(this).data('question')}][options][]" 
+                <input type="text" name="questions[${questionIndex}][options][]" 
                        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
                        placeholder="Option ${optionCount + 1}" required>
+                <label class="flex items-center">
+                    <input type="checkbox" name="questions[${questionIndex}][correct_answers][]" value="${optionCount}" 
+                           class="text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600">
+                    <span class="ml-1 text-sm text-gray-600 dark:text-gray-400">Correct</span>
+                </label>
                 <button type="button" class="remove-option text-red-600 hover:text-red-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -128,19 +128,84 @@ $(document).ready(function() {
             </div>
         `);
     });
-
+    
+    // Remove option
     $(document).on('click', '.remove-option', function() {
         $(this).closest('.flex').remove();
     });
 });
 
-function addQuestion() {
-    questionCount++;
+function toggleQuestionOptions(selectElement) {
+    const questionItem = selectElement.closest('.question-item');
+    const type = selectElement.val();
+    const optionsContainer = questionItem.find('.options-container');
     
+    if (type === 'multiple_choice') {
+        const questionIndex = selectElement.attr('name').match(/\[(\d+)\]/)[1];
+        optionsContainer.html(`
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options</label>
+            <div class="options-list">
+                <div class="flex items-center space-x-2 mb-2">
+                    <input type="text" name="questions[${questionIndex}][options][]" 
+                           class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                           placeholder="Option 1" required>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="questions[${questionIndex}][correct_answers][]" value="0" 
+                               class="text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600">
+                        <span class="ml-1 text-sm text-gray-600 dark:text-gray-400">Correct</span>
+                    </label>
+                    <button type="button" class="remove-option text-red-600 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2 mb-2">
+                    <input type="text" name="questions[${questionIndex}][options][]" 
+                           class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                           placeholder="Option 2" required>
+                    <label class="flex items-center">
+                        <input type="checkbox" name="questions[${questionIndex}][correct_answers][]" value="1" 
+                               class="text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600">
+                        <span class="ml-1 text-sm text-gray-600 dark:text-gray-400">Correct</span>
+                    </label>
+                    <button type="button" class="remove-option text-red-600 hover:text-red-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="add-option text-blue-600 hover:text-blue-700 text-sm font-medium" data-question="${questionIndex}">
+                + Add Option
+            </button>
+        `);
+    } else if (type === 'true_false') {
+        const questionIndex = selectElement.attr('name').match(/\[(\d+)\]/)[1];
+        optionsContainer.html(`
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Correct Answer</label>
+            <select name="questions[${questionIndex}][correct_answers][]" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" required>
+                <option value="true">True</option>
+                <option value="false">False</option>
+            </select>
+        `);
+    } else if (type === 'fill_blank') {
+        const questionIndex = selectElement.attr('name').match(/\[(\d+)\]/)[1];
+        optionsContainer.html(`
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Correct Answer</label>
+            <input type="text" name="questions[${questionIndex}][correct_answers][]" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                   placeholder="Enter the correct answer" required>
+        `);
+    }
+}
+
+function addNewQuestion() {
+    const container = $('#questions-container');
     const questionHtml = `
         <div class="question-item border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Question ${questionCount}</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Question ${questionIndex + 1}</h3>
                 <button type="button" class="remove-question text-red-600 hover:text-red-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -151,7 +216,7 @@ function addQuestion() {
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Question</label>
-                    <textarea name="questions[${questionCount}][question]" rows="3" required
+                    <textarea name="questions[${questionIndex}][question]" rows="3" required
                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                               placeholder="Enter your question"></textarea>
                 </div>
@@ -159,7 +224,7 @@ function addQuestion() {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Question Type</label>
-                        <select name="questions[${questionCount}][type]" class="question-type w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" required>
+                        <select name="questions[${questionIndex}][type]" class="question-type w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white" required>
                             <option value="multiple_choice">Multiple Choice</option>
                             <option value="true_false">True/False</option>
                             <option value="fill_blank">Fill in the Blank</option>
@@ -168,42 +233,25 @@ function addQuestion() {
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Points</label>
-                        <input type="number" name="questions[${questionCount}][points]" value="10" min="1" required
+                        <input type="number" name="questions[${questionIndex}][points]" value="10" min="1" required
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
                     </div>
                 </div>
                 
-                <div class="options-container">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Options</label>
-                    <div class="options-list">
-                        <div class="flex items-center space-x-2 mb-2">
-                            <input type="text" name="questions[${questionCount}][options][]" 
-                                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                   placeholder="Option 1" required>
-                        </div>
-                        <div class="flex items-center space-x-2 mb-2">
-                            <input type="text" name="questions[${questionCount}][options][]" 
-                                   class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                                   placeholder="Option 2" required>
-                        </div>
-                    </div>
-                    <button type="button" class="add-option text-blue-600 hover:text-blue-700 text-sm font-medium" data-question="${questionCount}">
-                        + Add Option
-                    </button>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Correct Answer(s)</label>
-                    <input type="text" name="questions[${questionCount}][correct_answers][]" required
-                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                           placeholder="For multiple choice: 0,1 (option indices). For true/false: true or false. For fill blank: correct answer">
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">For multiple choice, use option indices (0, 1, 2, etc.)</p>
-                </div>
+                <div class="options-container"></div>
             </div>
         </div>
     `;
     
-    $('#questions-container').append(questionHtml);
+    container.append(questionHtml);
+    
+    // Initialize the new question's options
+    const newQuestion = container.find('.question-item').last();
+    const selectElement = newQuestion.find('.question-type');
+    toggleQuestionOptions(selectElement);
+    
+    questionIndex++;
+    updateQuestionNumbers();
 }
 
 function updateQuestionNumbers() {

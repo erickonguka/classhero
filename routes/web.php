@@ -53,6 +53,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/discussions/{lesson}', [DiscussionController::class, 'store'])->name('discussions.store');
     Route::get('/discussions/{lesson}', [DiscussionController::class, 'index'])->name('discussions.index');
     Route::post('/discussions/{discussion}/resolve', [DiscussionController::class, 'resolve'])->name('discussions.resolve');
+    Route::get('/lessons/{lesson}/comment-count', [DiscussionController::class, 'commentCount'])->name('discussions.count');
     
     // Review routes
     Route::post('/courses/{course}/review', [App\Http\Controllers\ReviewController::class, 'store'])->name('courses.review');
@@ -80,6 +81,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // My Courses routes
     Route::get('/my-courses', [App\Http\Controllers\MyCourseController::class, 'index'])->name('my-courses.index');
+    
+    // Notification routes
+    Route::post('/notifications/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::get('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
 });
 
 // Teacher routes
@@ -91,6 +96,9 @@ Route::middleware(['auth', 'verified'])->prefix('teacher')->name('teacher.')->gr
     Route::resource('courses', TeacherCourseController::class);
     Route::resource('courses.lessons', App\Http\Controllers\Teacher\LessonController::class)->shallow();
     Route::resource('lessons', App\Http\Controllers\Teacher\LessonController::class)->only(['show', 'edit', 'update', 'destroy']);
+    
+    // Course lessons management
+    Route::get('/courses/{course}/lessons', [App\Http\Controllers\Teacher\LessonController::class, 'index'])->name('courses.lessons.index');
     
     // Quiz routes for lessons
     Route::get('/lessons/{lesson}/quiz/create', [App\Http\Controllers\Teacher\LessonController::class, 'createQuiz'])->name('lessons.quiz.create');

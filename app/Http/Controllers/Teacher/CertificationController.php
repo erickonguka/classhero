@@ -31,7 +31,7 @@ class CertificationController extends Controller
             $query->where('teacher_id', Auth::id());
         })
         ->whereNotNull('completed_at')
-        ->with(['user', 'course', 'certificate']);
+        ->with(['user', 'course', 'certificateRelation']);
 
         if ($request->search) {
             $search = '%' . $request->search . '%';
@@ -82,9 +82,22 @@ class CertificationController extends Controller
         $certificate = Certificate::create([
             'user_id' => $enrollment->user_id,
             'course_id' => $enrollment->course_id,
-            'enrollment_id' => $enrollment->id,
-            'certificate_code' => 'CERT-' . strtoupper(uniqid()),
+            'certificate_number' => 'CERT-' . strtoupper(uniqid()),
+            'verification_code' => 'VER-' . strtoupper(uniqid()),
             'issued_at' => now(),
+        ]);
+
+        // Notify learner about certificate approval
+        \App\Models\Notification::create([
+            'user_id' => $enrollment->user_id,
+            'title' => 'Certificate Approved!',
+            'message' => 'Congratulations! Your certificate for "' . $enrollment->course->title . '" has been approved and is now available for download.',
+            'type' => 'certificate_approved',
+            'data' => json_encode([
+                'course_id' => $enrollment->course_id,
+                'certificate_id' => $certificate->id,
+                'course_title' => $enrollment->course->title
+            ])
         ]);
 
         return response()->json([

@@ -5,6 +5,30 @@
 
 @section('content')
 <div class="p-6">
+    <!-- Lesson Suggestion Modal -->
+    @if(session('suggest_lessons'))
+    <div id="lesson-suggestion-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">🎉 Course Created Successfully!</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Ready to add some amazing lessons to your course?</p>
+                <div class="flex space-x-3">
+                    <button onclick="closeModal()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Later
+                    </button>
+                    <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-200 text-center">
+                        Add Lesson
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
     <!-- Course Header with Thumbnail -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
         @if($course->getFirstMediaUrl('thumbnails'))
@@ -26,32 +50,32 @@
         @endif
         
         <div class="p-6">
-            <div class="flex flex-wrap gap-2 mb-4">
-                <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 mb-4">
+                <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
                     Preview
                 </a>
-                <a href="{{ route('teacher.courses.edit', $course) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                <a href="{{ route('teacher.courses.edit', $course) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
                     Edit
                 </a>
-                <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                <a href="{{ route('teacher.courses.lessons.index', $course) }}" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
+                    Lessons
+                </a>
+                <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
                     Add Lesson
                 </a>
                 @if($course->status === 'draft' && $course->canBePublished())
-                    <form action="{{ route('teacher.courses.publish', $course) }}" method="POST" class="inline">
-                        @csrf
-                        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
-                            Submit
-                        </button>
-                    </form>
+                    <button onclick="confirmPublish({{ $course->id }})" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
+                        Submit
+                    </button>
                 @elseif($course->status === 'draft')
-                    <button disabled class="bg-gray-400 text-white px-3 py-1 rounded text-sm font-medium cursor-not-allowed" title="Add at least 1 lesson to publish">
+                    <button disabled class="bg-gray-400 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium cursor-not-allowed text-center" title="Add at least 1 lesson to publish">
                         Submit
                     </button>
                 @endif
-                <a href="{{ route('teacher.courses.students', $course) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                <a href="{{ route('teacher.courses.students', $course) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
                     Students ({{ $course->enrollments->count() }})
                 </a>
-                <a href="{{ route('teacher.courses.payments', $course) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                <a href="{{ route('teacher.courses.payments', $course) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center col-span-2 sm:col-span-1">
                     Payments
                 </a>
             </div>
@@ -128,39 +152,51 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Course Lessons</h2>
-            <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                Add New Lesson
-            </a>
+            <div class="flex space-x-2">
+                <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Add New Lesson
+                </a>
+            </div>
         </div>
 
         @if($course->lessons->count() > 0)
             <div class="space-y-4">
                 @foreach($course->lessons as $lesson)
                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <div class="flex justify-between items-start">
+                        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-start space-y-3 lg:space-y-0">
                             <div class="flex-1">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ $lesson->title }}</h3>
-                                <p class="text-gray-600 dark:text-gray-400 mb-2">{{ $lesson->description }}</p>
-                                <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                                    <span>Order: {{ $lesson->order }}</span>
-                                    <span>Type: {{ ucfirst($lesson->type) }}</span>
+                                <p class="text-gray-600 dark:text-gray-400 mb-2 text-sm">{{ \Illuminate\Support\Str::limit($lesson->description, 100) }}</p>
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Order: {{ $lesson->order }}</span>
+                                    <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ ucfirst($lesson->type) }}</span>
                                     @if($lesson->duration_minutes)
-                                        <span>{{ $lesson->duration_minutes }} minutes</span>
+                                        <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $lesson->duration_minutes }}m</span>
                                     @endif
                                     @if($lesson->quiz)
                                         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Has Quiz</span>
                                     @endif
                                 </div>
                             </div>
-                            <div class="flex space-x-2 ml-4">
-                                <a href="{{ route('teacher.lessons.edit', $lesson) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                            <div class="flex flex-wrap gap-1 lg:ml-4">
+                                <a href="{{ route('teacher.lessons.show', $lesson) }}" class="bg-gray-600 hover:bg-gray-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                                    View
+                                </a>
+                                <a href="{{ route('teacher.lessons.edit', $lesson) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors">
                                     Edit
                                 </a>
                                 @if(!$lesson->quiz)
-                                    <a href="{{ route('teacher.lessons.quiz.create', $lesson) }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
-                                        Add Quiz
+                                    <a href="{{ route('teacher.lessons.quiz.create', $lesson) }}" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        Quiz
+                                    </a>
+                                @else
+                                    <a href="{{ route('teacher.quizzes.edit', $lesson->quiz) }}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                                        Edit Quiz
                                     </a>
                                 @endif
+                                <button onclick="confirmDeleteLesson({{ $lesson->id }}, '{{ addslashes($lesson->title) }}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -254,110 +290,82 @@
         @endif
     </div>
 
-    <!-- Course Comments Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Course Comments by Lesson</h2>
-        
-        @if($course->lessons->count() > 0)
-            <div class="space-y-6">
-                @foreach($course->lessons as $lesson)
-                    @php
-                        $discussions = $lesson->discussions()->with('user')->latest()->take(3)->get();
-                    @endphp
-                    
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-semibold text-gray-900 dark:text-white">{{ $lesson->title }}</h3>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ $discussions->count() }} comments</span>
-                        </div>
-                        
-                        @if($discussions->count() > 0)
-                            <div class="space-y-3 mb-4">
-                                @foreach($discussions as $discussion)
-                                    <div class="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                                        @if($discussion->user->getProfilePictureUrl())
-                                            <img src="{{ $discussion->user->getProfilePictureUrl() }}" alt="{{ $discussion->user->name }}" class="w-8 h-8 rounded-full object-cover">
-                                        @else
-                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                                <span class="text-white text-xs font-medium">{{ substr($discussion->user->name, 0, 1) }}</span>
-                                            </div>
-                                        @endif
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-2 mb-1">
-                                                <span class="font-medium text-sm text-gray-900 dark:text-white">{{ $discussion->user->name }}</span>
-                                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $discussion->created_at->diffForHumans() }}</span>
-                                            </div>
-                                            <p class="text-sm text-gray-700 dark:text-gray-300">{{ Str::limit($discussion->content, 100) }}</p>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            
-                            <a href="{{ route('teacher.lessons.comments', $lesson) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm font-medium">
-                                View all comments →
-                            </a>
-                        @else
-                            <p class="text-gray-500 dark:text-gray-400 text-sm">No comments yet</p>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <p class="text-gray-500 dark:text-gray-400">No lessons available</p>
-        @endif
-    </div>
 
-    <!-- Course Comments Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mt-8">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Course Comments by Lesson</h2>
-        
-        @if($course->lessons->count() > 0)
-            <div class="space-y-6">
-                @foreach($course->lessons as $lesson)
-                    @php
-                        $discussions = $lesson->discussions()->with('user')->latest()->take(3)->get();
-                    @endphp
-                    
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-semibold text-gray-900 dark:text-white">{{ $lesson->title }}</h3>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ $discussions->count() }} comments</span>
-                        </div>
-                        
-                        @if($discussions->count() > 0)
-                            <div class="space-y-3 mb-4">
-                                @foreach($discussions as $discussion)
-                                    <div class="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                                        @if($discussion->user->getProfilePictureUrl())
-                                            <img src="{{ $discussion->user->getProfilePictureUrl() }}" alt="{{ $discussion->user->name }}" class="w-8 h-8 rounded-full object-cover">
-                                        @else
-                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                                <span class="text-white text-xs font-medium">{{ substr($discussion->user->name, 0, 1) }}</span>
-                                            </div>
-                                        @endif
-                                        <div class="flex-1">
-                                            <div class="flex items-center space-x-2 mb-1">
-                                                <span class="font-medium text-sm text-gray-900 dark:text-white">{{ $discussion->user->name }}</span>
-                                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $discussion->created_at->diffForHumans() }}</span>
-                                            </div>
-                                            <p class="text-sm text-gray-700 dark:text-gray-300">{{ Str::limit($discussion->content, 100) }}</p>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            
-                            <a href="{{ route('teacher.lessons.comments', $lesson) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm font-medium">
-                                View all comments →
-                            </a>
-                        @else
-                            <p class="text-gray-500 dark:text-gray-400 text-sm">No comments yet</p>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <p class="text-gray-500 dark:text-gray-400">No lessons available</p>
-        @endif
-    </div>
 </div>
+
+<script>
+function confirmPublish(courseId) {
+    Swal.fire({
+        title: 'Submit Course for Review',
+        text: 'Are you sure you want to submit this course for admin review? Once submitted, you won\'t be able to edit it until it\'s reviewed.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d97706',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, submit it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            submitPublish(courseId);
+        }
+    });
+}
+
+function submitPublish(courseId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/teacher/courses/${courseId}/publish`;
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    form.appendChild(csrfToken);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function confirmDeleteLesson(lessonId, lessonTitle) {
+    Swal.fire({
+        title: 'Delete Lesson',
+        text: `Are you sure you want to delete "${lessonTitle}"? This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteLesson(lessonId);
+        }
+    });
+}
+
+function deleteLesson(lessonId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/teacher/lessons/${lessonId}`;
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = '_token';
+    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    const methodField = document.createElement('input');
+    methodField.type = 'hidden';
+    methodField.name = '_method';
+    methodField.value = 'DELETE';
+    
+    form.appendChild(csrfToken);
+    form.appendChild(methodField);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function closeModal() {
+    document.getElementById('lesson-suggestion-modal').style.display = 'none';
+}
+</script>
 @endsection

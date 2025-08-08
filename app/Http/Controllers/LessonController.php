@@ -12,10 +12,11 @@ class LessonController extends Controller
 {
     public function show(Course $course, Lesson $lesson)
     {
-        // Check if user is enrolled or lesson is free
+        // Check if user is enrolled, lesson is free, or user is the course teacher
         $isEnrolled = Auth::check() && Auth::user()->enrollments()->where('course_id', $course->id)->exists();
+        $isTeacher = Auth::check() && Auth::id() === $course->teacher_id;
         
-        if (!$lesson->is_free && !$isEnrolled) {
+        if (!$lesson->is_free && !$isEnrolled && !$isTeacher) {
             return redirect()->route('courses.show', $course->slug)
                 ->with('error', 'You need to enroll in this course to access this lesson.');
         }
@@ -46,7 +47,7 @@ class LessonController extends Controller
             ->orderBy('order', 'desc')
             ->first();
 
-        return view('lessons.show', compact('course', 'lesson', 'progress', 'nextLesson', 'previousLesson', 'isEnrolled'));
+        return view('lessons.show', compact('course', 'lesson', 'progress', 'nextLesson', 'previousLesson', 'isEnrolled', 'isTeacher'));
     }
 
     public function complete(Lesson $lesson)
@@ -60,49 +61,53 @@ class LessonController extends Controller
             ->first();
 
         if ($progress && !$progress->is_completed) {
-            $isLastLesson = $lesson->course->lessons()
-                ->where('order', '>=', $lesson->order)
-                ->where('is_published', true)
-                ->count() === 1;
+            $progress->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
 
-            $completed = true;
-
-            // Check completion requirements for non-quiz lessons
-            if ($lesson->require_quiz_pass && !$progress->quiz_passed) {
-                $completed = false;
-            }
-            if ($lesson->require_comment && !$progress->comment_posted) {
-                $completed = false;
-            }
-
-            if ($completed) {
-                $progress->update([
-                    'is_completed' => true,
-                    'completed_at' => now(),
-                    'pending_approval' => $isLastLesson ? true : false, // Set pending approval for last lesson
-                ]);
-
-                // Update enrollment progress
-                $enrollment = Auth::user()->enrollments()->where('course_id', $lesson->course_id)->first();
-                if ($enrollment) {
-                    $totalLessons = $lesson->course->lessons()->where('is_published', true)->count();
-                    $completedLessons = Auth::user()->lessonProgress()
-                        ->whereHas('lesson', function($query) use ($lesson) {
-                            $query->where('course_id', $lesson->course_id);
-                        })
-                        ->where('is_completed', true)
-                        ->count();
-
-                    $progressPercentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
-
-                    $enrollment->update([
-                        'progress_percentage' => $progressPercentage,
-                        'lessons_completed' => $completedLessons,
+            // Update enrollment progress
+            $enrollment = Auth::user()->enrollments()->where('course_id', $lesson->course_id)->first();
+            if ($enrollment) {
+                $enrollment->recalculateProgress();
+                
+                // Check if course is fully completed (all lessons done)
+                if ($enrollment->isFullyCompleted()) {
+                    // Notify teacher for certificate approval
+                    \App\Models\Notification::create([
+                        'user_id' => $lesson->course->teacher_id,
+                        'title' => 'Student Completed Course',
+                        'message' => Auth::user()->name . ' has completed "' . $lesson->course->title . '" and is awaiting certificate approval.',
+                        'type' => 'course_completion',
+                        'data' => json_encode([
+                            'course_id' => $lesson->course_id,
+                            'student_id' => Auth::id(),
+                            'student_name' => Auth::user()->name
+                        ])
                     ]);
-
-                    // Award points
-                    Auth::user()->increment('points', 10);
+                    
+                    return response()->json([
+                        'success' => true, 
+                        'course_completed' => true,
+                        'trigger_review' => true,
+                        'course_id' => $lesson->course_id
+                    ]);
                 }
+                
+                // Trigger review modal at 80% progress
+                if ($enrollment->progress_percentage >= 80) {
+                    $hasReviewed = Auth::user()->reviews()->where('course_id', $lesson->course_id)->exists();
+                    if (!$hasReviewed) {
+                        return response()->json([
+                            'success' => true,
+                            'trigger_review' => true,
+                            'course_id' => $lesson->course_id
+                        ]);
+                    }
+                }
+
+                // Award points
+                Auth::user()->increment('points', 10);
             }
         }
 

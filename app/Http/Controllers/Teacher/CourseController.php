@@ -88,7 +88,8 @@ class CourseController extends Controller
         }
 
         return redirect()->route('teacher.courses.show', $course)
-            ->with('success', 'Course created successfully!');
+            ->with('success', 'Course created successfully!')
+            ->with('suggest_lessons', true);
     }
 
     public function show(Course $course)
@@ -156,8 +157,15 @@ class CourseController extends Controller
                    ->toMediaCollection('thumbnails');
         }
 
+        // Recalculate progress for all enrolled students when course is updated
+        $course->enrollments()->chunk(100, function($enrollments) {
+            foreach ($enrollments as $enrollment) {
+                $enrollment->recalculateProgress();
+            }
+        });
+
         return redirect()->route('teacher.courses.show', $course)
-            ->with('success', 'Course updated successfully!');
+            ->with('success', 'Course updated successfully! Student progress has been recalculated.');
     }
 
     public function destroy(Course $course)

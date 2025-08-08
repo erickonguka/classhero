@@ -19,7 +19,7 @@ class Lesson extends Model implements HasMedia
         'content',
         'type',
         'video_url',
-        'audio_url',
+        'external_url',
         'duration_minutes',
         'order',
         'is_free',
@@ -69,5 +69,16 @@ class Lesson extends Model implements HasMedia
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    public function getMediaUrl($collection = 'default')
+    {
+        $media = $this->getFirstMedia($collection);
+        return $media ? $media->getUrl() : null;
+    }
+
+    public function lessonMedia()
+    {
+        return $this->hasMany(LessonMedia::class)->orderBy('order');
     }
 }

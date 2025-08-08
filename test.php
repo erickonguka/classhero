@@ -1,43 +1,42 @@
-@php
-    // Generate a new UUID for this artifact since it's a modified version but not directly updating a previous one
-@endphp
-
 @extends('layouts.teacher')
 
-@section('title', 'Create Lesson')
-@section('page-title', 'Create Lesson')
+@section('title', 'Edit Lesson')
+@section('page-title', 'Edit Lesson')
 
 @section('content')
-<div class="p-4 sm:p-6">
+<div class="p-6">
     <div class="max-w-4xl mx-auto">
-        <div class="mb-4 sm:mb-6">
-            <a href="{{ route('teacher.courses.show', $course) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                Back to Course
+        <div class="mb-6">
+            <a href="{{ route('teacher.courses.show', $lesson->course) }}" class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm">
+                ← Back to Course
             </a>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
-            <form id="lesson-form" action="{{ route('teacher.courses.lessons.store', $course) }}" method="POST" enctype="multipart/form-data">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <form id="lesson-form" action="{{ route('teacher.lessons.update', $lesson) }}" method="POST" enctype="multipart/form-data">
                 @csrf
+                @method('PUT')
 
                 <!-- Progress Indicator -->
-                <div class="mb-6 sm:mb-8 progress-indicator">
-                    <div class="flex flex-nowrap overflow-x-auto gap-2 sm:gap-4 pb-2">
-                        <button type="button" data-step="basic" class="step-tab flex-shrink-0 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">1. Basic Info</button>
-                        <button type="button" data-step="content" class="step-tab flex-shrink-0 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">2. Content</button>
-                        <button type="button" data-step="media" class="step-tab flex-shrink-0 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">3. Media</button>
-                        <button type="button" data-step="settings" class="step-tab flex-shrink-0 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">4. Settings</button>
+                <div class="mb-8">
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-4 overflow-x-auto pb-2">
+                            <button type="button" data-step="basic" class="step-tab px-4 py-2 text-sm font-medium rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">1. Basic Info</button>
+                            <button type="button" data-step="content" class="step-tab px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">2. Content</button>
+                            <button type="button" data-step="media" class="step-tab px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">3. Media</button>
+                            <button type="button" data-step="settings" class="step-tab px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">4. Settings</button>
+                            <button type="button" data-step="thumbnail" class="step-tab px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">5. Thumbnail</button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Step 1: Basic Information -->
                 <div id="step-basic" class="step-content">
-                    <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Basic Information</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Basic Information</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lesson Title</label>
-                            <input type="text" id="title" name="title" value="{{ old('title') }}" required
-                                   class="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            <input type="text" id="title" name="title" value="{{ old('title', $lesson->title) }}" required
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                    placeholder="Enter lesson title">
                             @error('title')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -45,91 +44,99 @@
                         </div>
                         <div>
                             <label for="duration_minutes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration (minutes)</label>
-                            <input type="number" id="duration_minutes" name="duration_minutes" value="{{ old('duration_minutes') }}" min="1"
-                                   class="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                            <input type="number" id="duration_minutes" name="duration_minutes" value="{{ old('duration_minutes', $lesson->duration_minutes) }}" min="1"
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                    placeholder="e.g., 30">
                             @error('duration_minutes')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
-                    <div class="mb-4 sm:mb-6">
+                    <div class="mb-6">
                         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
                         <textarea id="description" name="description" rows="4" required
-                                  class="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                                  placeholder="Describe what this lesson covers">{{ old('description') }}</textarea>
+                                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                  placeholder="Describe what this lesson covers">{{ old('description', $lesson->description) }}</textarea>
                         @error('description')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div class="flex justify-end">
-                        <button type="button" data-next="content" class="next-step px-4 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs sm:text-sm">Next: Content</button>
+                        <button type="button" data-next="content" class="next-step px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Next: Content</button>
                     </div>
                 </div>
 
                 <!-- Step 2: Lesson Content -->
                 <div id="step-content" class="step-content hidden">
-                    <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Lesson Content</h2>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Lesson Content</h2>
                     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-600 overflow-hidden">
-                        <textarea id="content" name="content">{{ old('content') }}</textarea>
+                        <textarea id="content" name="content">{{ old('content', $lesson->content) }}</textarea>
                     </div>
                     @error('content')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                     <div class="flex justify-between mt-4">
-                        <button type="button" data-prev="basic" class="prev-step px-4 sm:px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm">Back</button>
-                        <button type="button" data-next="media" class="next-step px-4 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs sm:text-sm">Next: Media</button>
+                        <button type="button" data-prev="basic" class="prev-step px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Back</button>
+                        <button type="button" data-next="media" class="next-step px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Next: Media</button>
                     </div>
                 </div>
 
                 <!-- Step 3: Media Attachments -->
                 <div id="step-media" class="step-content hidden">
-                    <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">📎 Media Attachments</h2>
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-4 sm:p-6 border border-blue-200 dark:border-gray-600 mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Media Attachments</h2>
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-6 border border-blue-200 dark:border-gray-600 mb-4">
                         <!-- Quick Actions -->
-                        <div class="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
-                            <button type="button" id="upload-files-btn" class="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm">
-                                <svg class="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <div class="flex flex-wrap gap-3 mb-6">
+                            <button type="button" id="upload-files-btn" class="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                 <span>Upload Files</span>
                             </button>
-                            <button type="button" id="record-video-btn" class="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm">
-                                <svg class="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            <button type="button" id="record-video-btn" class="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                                 <span>Record Video</span>
                             </button>
-                            <button type="button" id="record-audio-btn" class="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm">
-                                <svg class="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                            <button type="button" id="record-audio-btn" class="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
                                 <span>Record Audio</span>
                             </button>
-                            <button type="button" id="add-youtube-btn" class="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm">
-                                <svg class="w-4 sm:w-5 h-4 sm:h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                            <button type="button" id="add-youtube-btn" class="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
                                 <span>YouTube</span>
                             </button>
-                            <button type="button" id="add-link-btn" class="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 text-xs sm:text-sm">
-                                <svg class="w-4 sm:w-5 h-4 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            <button type="button" id="add-link-btn" class="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                 <span>Add Link</span>
                             </button>
                         </div>
                         <!-- Hidden File Inputs -->
                         <input type="file" id="media-files" name="media_files[]" multiple accept="*" class="hidden">
-                        <input type="url" id="video_url" name="video_url" value="{{ old('video_url') }}" class="hidden">
-                        <input type="url" id="external_url" name="external_url" value="{{ old('external_url') }}" class="hidden">
-                        <input type="hidden" id="media_data" name="media_data" value="{{ old('media_data', json_encode([])) }}">
+                        <input type="url" id="video_url" name="video_url" value="{{ old('video_url', $lesson->video_url) }}" class="hidden">
+                        <input type="url" id="external_url" name="external_url" value="{{ old('external_url', $lesson->external_url) }}" class="hidden">
+                        <input type="hidden" id="media_data" name="media_data" value="{{ old('media_data', json_encode($lesson->lessonMedia->map(function($media) {
+                            return [
+                                'type' => $media->type,
+                                'title' => $media->title,
+                                'description' => $media->description,
+                                'url' => $media->url,
+                                'order' => $media->order
+                            ];
+                        }))) }}">
                         <!-- Dropzone -->
-                        <div id="dropzone" class="border-2 border-dashed border-blue-300 dark:border-gray-500 rounded-lg p-6 sm:p-8 text-center hover:border-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 transition-all duration-300 cursor-pointer">
-                            <svg class="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div id="dropzone" class="border-2 border-dashed border-blue-300 dark:border-gray-500 rounded-lg p-8 text-center hover:border-blue-500 hover:bg-blue-100 dark:hover:bg-gray-600 transition-all duration-300 cursor-pointer">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                             </svg>
-                            <p class="text-gray-600 dark:text-gray-300 font-medium text-sm sm:text-base">Drop files here or click to browse</p>
-                            <p class="text-xs sm:text-sm text-gray-500 mt-1">Videos, Audio, Images, PDFs, Documents (max 100MB per file)</p>
+                            <p class="text-gray-600 dark:text-gray-300 font-medium">Drop files here or click to browse</p>
+                            <p class="text-sm text-gray-500 mt-1">Videos, Audio, Images, PDFs, Documents (max 100MB per file)</p>
                         </div>
                     </div>
                     <!-- Media Items Container -->
                     <div id="media-items" class="space-y-3"></div>
                     <!-- Recording Interface -->
-                    <div id="recording-interface" class="hidden mt-4 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl border">
+                    <div id="recording-interface" class="hidden mt-4 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-xl border">
                         <video id="video-preview" class="w-full max-w-md mx-auto rounded-lg shadow-lg hidden" autoplay muted></video>
-                        <div id="audio-visualizer" class="hidden text-center py-6 sm:py-8">
-                            <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-4 sm:p-6 text-white">
+                        <div id="audio-visualizer" class="hidden text-center py-8">
+                            <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6 text-white">
                                 <div class="flex justify-center space-x-1 mb-4">
                                     <div class="w-2 h-8 bg-white bg-opacity-60 rounded animate-pulse" style="animation-delay: 0ms"></div>
                                     <div class="w-2 h-12 bg-white bg-opacity-60 rounded animate-pulse" style="animation-delay: 100ms"></div>
@@ -137,33 +144,33 @@
                                     <div class="w-2 h-10 bg-white bg-opacity-60 rounded animate-pulse" style="animation-delay: 300ms"></div>
                                     <div class="w-2 h-4 bg-white bg-opacity-60 rounded animate-pulse" style="animation-delay: 400ms"></div>
                                 </div>
-                                <div class="text-xl sm:text-2xl font-mono" id="recording-time">00:00</div>
+                                <div class="text-2xl font-mono" id="recording-time">00:00</div>
                             </div>
                         </div>
                         <div class="flex justify-center space-x-4 mt-4">
-                            <button type="button" id="start-recording" class="flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-200 text-xs sm:text-sm">
+                            <button type="button" id="start-recording" class="flex items-center space-x-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-200">
                                 <div class="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                                 <span>Start Recording</span>
                             </button>
-                            <button type="button" id="stop-recording" class="hidden flex items-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full transition-all duration-200 text-xs sm:text-sm">
+                            <button type="button" id="stop-recording" class="hidden flex items-center space-x-2 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full transition-all duration-200">
                                 <div class="w-3 h-3 bg-white"></div>
                                 <span>Stop Recording</span>
                             </button>
                         </div>
                     </div>
                     <div class="flex justify-between mt-4">
-                        <button type="button" data-prev="content" class="prev-step px-4 sm:px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm">Back</button>
-                        <button type="button" data-next="settings" class="next-step px-4 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs sm:text-sm">Next: Settings</button>
+                        <button type="button" data-prev="content" class="prev-step px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Back</button>
+                        <button type="button" data-next="settings" class="next-step px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Next: Settings</button>
                     </div>
                 </div>
 
                 <!-- Step 4: Lesson Settings -->
                 <div id="step-settings" class="step-content hidden">
-                    <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Lesson Settings</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Lesson Settings</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex items-center">
                             <label class="flex items-center">
-                                <input type="checkbox" name="is_free" value="1" {{ old('is_free') ? 'checked' : '' }}
+                                <input type="checkbox" name="is_free" value="1" {{ old('is_free', $lesson->is_free) ? 'checked' : '' }}
                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
                                 <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Make this lesson free</span>
                             </label>
@@ -172,17 +179,17 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Completion Requirements</label>
                             <div class="space-y-2">
                                 <label class="flex items-center">
-                                    <input type="checkbox" name="require_video_completion" value="1" {{ old('require_video_completion') ? 'checked' : '' }}
+                                    <input type="checkbox" name="require_video_completion" value="1" {{ old('require_video_completion', $lesson->require_video_completion) ? 'checked' : '' }}
                                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
                                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require video completion</span>
                                 </label>
                                 <label class="flex items-center">
-                                    <input type="checkbox" name="require_quiz_pass" value="1" {{ old('require_quiz_pass') ? 'checked' : '' }}
+                                    <input type="checkbox" name="require_quiz_pass" value="1" {{ old('require_quiz_pass', $lesson->require_quiz_pass) ? 'checked' : '' }}
                                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
                                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require quiz pass</span>
                                 </label>
                                 <label class="flex items-center">
-                                    <input type="checkbox" name="require_comment" value="1" {{ old('require_comment') ? 'checked' : '' }}
+                                    <input type="checkbox" name="require_comment" value="1" {{ old('require_comment', $lesson->require_comment) ? 'checked' : '' }}
                                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
                                     <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Require comment</span>
                                 </label>
@@ -190,20 +197,37 @@
                         </div>
                     </div>
                     <div class="flex justify-between mt-4">
-                        <button type="button" data-prev="media" class="prev-step px-4 sm:px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm">Back</button>
-                        <button type="submit" id="submit-btn" class="px-4 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs sm:text-sm flex items-center">
-                            <span id="submit-text">Create Lesson</span>
-                            <svg id="submit-spinner" class="w-5 h-5 ml-2 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        </button>
+                        <button type="button" data-prev="media" class="prev-step px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Back</button>
+                        <button type="button" data-next="thumbnail" class="next-step px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Next: Thumbnail</button>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="flex justify-end mt-4 sm:mt-6 hidden">
-                    <button type="submit" id="submit-btn" class="px-4 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center">
-                        <span id="submit-text">Create Lesson</span>
-                        <svg id="submit-spinner" class="w-5 h-5 ml-2 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    </button>
+                <!-- Step 5: Lesson Thumbnail -->
+                <div id="step-thumbnail" class="step-content hidden">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Lesson Thumbnail</h2>
+                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:border-green-400 transition-colors duration-200">
+                        <input type="file" id="thumbnail" name="thumbnail" accept="image/*" class="hidden">
+                        <button type="button" onclick="document.getElementById('thumbnail').click()" class="flex flex-col items-center space-y-3">
+                            <svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span class="text-lg font-medium text-gray-700 dark:text-gray-300">Upload Thumbnail</span>
+                            <span class="text-sm text-gray-500">Recommended: 1280x720px, max 2MB</span>
+                        </button>
+                    </div>
+                    <div id="thumbnail-preview" class="mt-4 {{ $lesson->thumbnail ? '' : 'hidden' }}">
+                        <div class="relative inline-block">
+                            <img id="thumbnail-preview-img" src="{{ $lesson->thumbnail ? Storage::url($lesson->thumbnail) : '' }}" class="max-w-xs rounded-lg shadow-lg" alt="Thumbnail Preview">
+                            <button type="button" id="thumbnail-remove" class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    @error('thumbnail')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <div class="flex justify-between mt-4">
+                        <button type="button" data-prev="settings" class="prev-step px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Back</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">Update Lesson</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -211,63 +235,8 @@
 </div>
 @endsection
 
-@push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<style>
-.progress-indicator {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-.progress-indicator::-webkit-scrollbar {
-    display: none;
-}
-.progress-indicator .flex {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.5rem;
-    padding-bottom: 0.5rem;
-}
-.step-tab {
-    flex: 0 0 auto;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
-    min-height: 44px;
-    line-height: 1.5;
-}
-@media (min-width: 640px) {
-    .progress-indicator .flex {
-        gap: 1rem;
-        padding-left: 0;
-    }
-    .step-tab {
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-    }
-}
-.step-tab.bg-blue-100,
-.step-tab.dark\:bg-blue-900 {
-    font-weight: 600;
-}
-</style>
-@endpush
-
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-toastr.options = {
-    closeButton: true,
-    progressBar: true,
-    positionClass: 'toast-top-right',
-    timeOut: 3000
-};
-
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize TinyMCE
     if (typeof window.initTinyMCE === 'function') {
@@ -293,7 +262,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     stepTabs.forEach(tab => {
-        tab.addEventListener('click', () => showStep(tab.dataset.step));
+        tab.addEventListener('click', () => {
+            showStep(tab.dataset.step);
+        });
     });
 
     nextButtons.forEach(button => {
@@ -306,7 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     prevButtons.forEach(button => {
-        button.addEventListener('click', () => showStep(button.dataset.prev));
+        button.addEventListener('click', () => {
+            showStep(button.dataset.prev);
+        });
     });
 
     // Form Validation
@@ -317,14 +290,14 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!input.value.trim()) {
                 valid = false;
                 input.classList.add('border-red-500');
-                toastr.error(`${input.previousElementSibling.textContent} is required`);
+                showToast(`${input.previousElementSibling.textContent} is required`, 'error');
             } else {
                 input.classList.remove('border-red-500');
             }
             if (input.type === 'number' && input.value <= 0) {
                 valid = false;
                 input.classList.add('border-red-500');
-                toastr.error(`${input.previousElementSibling.textContent} must be a positive number`);
+                showToast(`${input.previousElementSibling.textContent} must be a positive number`, 'error');
             }
         });
         return valid;
@@ -337,7 +310,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let mediaCounter = 0;
     let attachedMedia = [];
 
+    // Initialize existing media
+    const existingMedia = JSON.parse(document.getElementById('media_data').value || '[]');
+    existingMedia.forEach(media => {
+        addMediaItem(null, media.type, media.url, media.title, media.description);
+    });
+
     function getMediaType(file) {
+        if (!file) return null;
         const ext = file.name.split('.').pop().toLowerCase();
         const videoExts = ['mp4', 'webm', 'avi', 'mov', 'mkv'];
         const audioExts = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
@@ -425,6 +405,14 @@ document.addEventListener('DOMContentLoaded', function() {
             img.className = 'max-w-xs rounded-lg shadow-lg';
             preview.appendChild(img);
             mediaItem.appendChild(preview);
+        } else if (mediaType === 'image' && url) {
+            const preview = document.createElement('div');
+            preview.className = 'mt-3';
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'max-w-xs rounded-lg shadow-lg';
+            preview.appendChild(img);
+            mediaItem.appendChild(preview);
         }
 
         mediaItems.appendChild(mediaItem);
@@ -440,8 +428,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         updateMediaData();
-        toastr.success(`${file ? file.name : 'Media'} added successfully!`);
+        showToast(`${file ? file.name : 'Media'} added successfully!`, 'success');
 
+        // Drag-and-Drop Handlers
         mediaItem.addEventListener('dragstart', (e) => {
             e.dataTransfer.setData('text/plain', itemId);
         });
@@ -523,6 +512,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 preview.className = 'mt-3';
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(file);
+                img.className = 'max-w-xs rounded-lg shadow-lg';
+                preview.appendChild(img);
+                mediaItem.appendChild(preview);
+            } else if (mediaType === 'image' && item.url) {
+                const preview = document.createElement('div');
+                preview.className = 'mt-3';
+                const img = document.createElement('img');
+                img.src = item.url;
                 img.className = 'max-w-xs rounded-lg shadow-lg';
                 preview.appendChild(img);
                 mediaItem.appendChild(preview);
@@ -622,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const files = Array.from(e.dataTransfer.files);
         files.forEach(file => {
             if (file.size > 100 * 1024 * 1024) {
-                toastr.error(`${file.name} is too large. Maximum size is 100MB.`);
+                showToast(`${file.name} is too large. Maximum size is 100MB.`, 'error');
                 return;
             }
             addMediaItem(file);
@@ -633,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const files = Array.from(e.target.files);
         files.forEach(file => {
             if (file.size > 100 * 1024 * 1024) {
-                toastr.error(`${file.name} is too large. Maximum size is 100MB.`);
+                showToast(`${file.name} is too large. Maximum size is 100MB.`, 'error');
                 return;
             }
             addMediaItem(file);
@@ -662,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('video_url').value = url;
             addMediaItem(null, 'youtube', url);
         } else if (url) {
-            toastr.error('Please enter a valid YouTube URL');
+            showToast('Please enter a valid YouTube URL', 'error');
         }
     }
 
@@ -672,9 +669,32 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('external_url').value = url;
             addMediaItem(null, 'link', url);
         } else if (url) {
-            toastr.error('Please enter a valid URL starting with http');
+            showToast('Please enter a valid URL starting with http', 'error');
         }
     }
+
+    // Thumbnail Handling
+    document.getElementById('thumbnail').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('Thumbnail is too large. Maximum size is 2MB.', 'error');
+                this.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('thumbnail-preview-img').src = e.target.result;
+                document.getElementById('thumbnail-preview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('thumbnail-remove').addEventListener('click', function() {
+        document.getElementById('thumbnail').value = '';
+        document.getElementById('thumbnail-preview').classList.add('hidden');
+    });
 
     // Recording Functions
     let mediaRecorder;
@@ -704,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('stop-recording').onclick = () => stopRecording(type);
         } catch (err) {
             console.error('Media access error:', err);
-            toastr.error(`${type === 'video' ? 'Camera' : 'Microphone'} access denied`);
+            showToast(`${type === 'video' ? 'Camera' : 'Microphone'} access denied`, 'error');
         }
     }
 
@@ -719,14 +739,14 @@ document.addEventListener('DOMContentLoaded', function() {
         mediaRecorder.onstop = () => {
             const blob = new Blob(recordedChunks, { type: type === 'video' ? 'video/webm' : 'audio/webm' });
             if (blob.size > 100 * 1024 * 1024) {
-                toastr.error('Recording is too large. Maximum size is 100MB.');
+                showToast('Recording is too large. Maximum size is 100MB.', 'error');
                 stream.getTracks().forEach(track => track.stop());
                 return;
             }
             const file = new File([blob], `recorded-${type}.webm`, { type: blob.type });
             addMediaItem(file, type);
             document.getElementById('recording-interface').classList.add('hidden');
-            toastr.success(`${type.charAt(0).toUpperCase() + type.slice(1)} recorded successfully!`);
+            showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} recorded successfully!`, 'success');
             stream.getTracks().forEach(track => track.stop());
         };
 
@@ -764,35 +784,52 @@ document.addEventListener('DOMContentLoaded', function() {
         stopTimer();
     }
 
-    // AJAX Form Submission
+    function showToast(message, type = 'info') {
+        const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+        const toast = document.createElement('div');
+        toast.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 100);
+
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Form Submission
     document.getElementById('lesson-form').addEventListener('submit', function(e) {
         e.preventDefault();
         if (!validateStep('basic') || !validateStep('content')) {
-            toastr.error('Please complete all required fields');
+            showToast('Please complete all required fields', 'error');
             return;
         }
 
         Swal.fire({
-            title: 'Create Lesson?',
-            text: 'Are you sure you want to create this lesson?',
+            title: 'Update Lesson?',
+            text: 'Are you sure you want to update this lesson?',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Yes, create it!',
+            confirmButtonText: 'Yes, update it!',
             cancelButtonText: 'No, cancel',
         }).then((result) => {
             if (result.isConfirmed) {
                 const form = e.target;
                 const formData = new FormData(form);
-                const submitBtn = document.getElementById('submit-btn');
-                const submitText = document.getElementById('submit-text');
-                const submitSpinner = document.getElementById('submit-spinner');
-
+                const submitBtn = form.querySelector('button[type="submit"]');
                 submitBtn.disabled = true;
-                submitText.textContent = 'Processing...';
-                submitSpinner.classList.remove('hidden');
+                submitBtn.textContent = 'Processing...';
 
                 fetch(form.action, {
-                    method: 'POST',
+                    method: 'POST', // Laravel handles _method=PUT
                     body: formData,
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
@@ -801,13 +838,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     submitBtn.disabled = false;
-                    submitText.textContent = 'Create Lesson';
-                    submitSpinner.classList.add('hidden');
-
+                    submitBtn.textContent = 'Update Lesson';
                     if (data.success) {
                         Swal.fire({
                             title: 'Success!',
-                            text: 'Lesson created successfully!',
+                            text: 'Lesson updated successfully!',
                             icon: 'success',
                             timer: 2000,
                             showConfirmButton: false
@@ -815,14 +850,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             window.location.href = data.redirect;
                         });
                     } else {
-                        toastr.error(data.message || 'An error occurred while creating the lesson.');
+                        showToast(data.message || 'An error occurred while updating the lesson.', 'error');
                     }
                 })
                 .catch(error => {
                     submitBtn.disabled = false;
-                    submitText.textContent = 'Create Lesson';
-                    submitSpinner.classList.add('hidden');
-                    toastr.error('An error occurred. Please try again.');
+                    submitBtn.textContent = 'Update Lesson';
+                    showToast('An error occurred. Please try again.', 'error');
                     console.error('Error:', error);
                 });
             }

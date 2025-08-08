@@ -8,8 +8,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- TinyMCE Self-hosted -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js"></script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900" x-bind:class="{ 'overflow-hidden': sidebarOpen }">
+    <!-- Page Loader -->
+    <div id="page-loader" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+    </div>
     <div x-data="{ sidebarOpen: false }" class="flex h-screen" @keydown.escape.window="sidebarOpen = false">
         <!-- Sidebar -->
         <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0" 
@@ -123,26 +132,34 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM10.07 2.82l-.9.9a2 2 0 000 2.83l8.49 8.49a2 2 0 002.83 0l.9-.9a2 2 0 000-2.83L12.9 2.82a2 2 0 00-2.83 0z"></path>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"></path>
                                 </svg>
-                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                                @php $unreadCount = auth()->user()->unreadNotifications()->count(); @endphp
+                                @if($unreadCount > 0)
+                                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ $unreadCount }}</span>
+                                @endif
                             </button>
                             
-                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                                <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-w-screen-sm">
+                                <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                                     <h3 class="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                                    @if($unreadCount > 0)
+                                        <button onclick="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                            Mark all as read
+                                        </button>
+                                    @endif
                                 </div>
                                 <div class="max-h-64 overflow-y-auto">
-                                    <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <p class="text-sm text-gray-900 dark:text-white">New student enrolled in "Web Development"</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">2 minutes ago</p>
-                                    </div>
-                                    <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <p class="text-sm text-gray-900 dark:text-white">Course "React Basics" approved</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">1 hour ago</p>
-                                    </div>
-                                    <div class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <p class="text-sm text-gray-900 dark:text-white">New comment on lesson</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">3 hours ago</p>
-                                    </div>
+                                    @php $notifications = auth()->user()->notifications()->latest()->take(5)->get(); @endphp
+                                    @forelse($notifications as $notification)
+                                        <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $notification->isRead() ? '' : 'bg-blue-50 dark:bg-blue-900' }}">
+                                            <p class="text-sm text-gray-900 dark:text-white font-medium">{{ $notification->title }}</p>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ $notification->message }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                        </a>
+                                    @empty
+                                        <div class="px-4 py-3 text-center">
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
+                                        </div>
+                                    @endforelse
                                 </div>
                             </div>
                         </div>
@@ -209,6 +226,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
         toastr.options = {
             "closeButton": true,
@@ -223,6 +243,52 @@
         @if(session('error'))
             toastr.error('{{ session('error') }}');
         @endif
+        
+        function markAllAsRead() {
+            fetch('{{ route("notifications.mark-all-read") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+        
+        $(window).on('load', function() {
+            $('#page-loader').fadeOut(300);
+        });
+        setTimeout(function() {
+            $('#page-loader').fadeOut(300);
+        }, 3000);
+        
+        // Global TinyMCE configuration
+        window.initTinyMCE = function(selector = '#content') {
+            if (typeof tinymce !== 'undefined') {
+                tinymce.init({
+                    selector: selector,
+                    height: 400,
+                    plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount emoticons',
+                    toolbar: 'undo redo | blocks | bold italic forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | link image media | emoticons | help',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 16px; line-height: 1.6; }',
+                    skin: 'oxide',
+                    content_css: 'default',
+                    menubar: false,
+                    branding: false,
+                    resize: true,
+                    setup: function(editor) {
+                        editor.on('init', function() {
+                            console.log('TinyMCE initialized successfully');
+                        });
+                    }
+                });
+            }
+        };
     </script>
+    
+    @stack('scripts')
 </body>
 </html>

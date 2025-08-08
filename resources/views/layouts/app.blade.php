@@ -72,6 +72,12 @@
             transform: translateY(-5px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="font-sans antialiased bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
@@ -121,6 +127,72 @@
                         </button>
 
                         @auth
+                            <!-- Notifications -->
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" class="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM11 19H6.5A2.5 2.5 0 014 16.5v-9A2.5 2.5 0 016.5 5h11A2.5 2.5 0 0120 7.5V11"></path>
+                                    </svg>
+                                    @if(auth()->user()->unreadNotifications()->count() > 0)
+                                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                            {{ auth()->user()->unreadNotifications()->count() }}
+                                        </span>
+                                    @endif
+                                </button>
+                                
+                                <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                                    <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                                        @if(auth()->user()->unreadNotifications()->count() > 0)
+                                            <button onclick="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                                Mark all read
+                                            </button>
+                                        @endif
+                                    </div>
+                                    <div class="max-h-96 overflow-y-auto">
+                                        @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
+                                            <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $notification->read_at ? 'opacity-75' : 'bg-blue-50 dark:bg-blue-900' }}">
+                                                <div class="flex items-start space-x-3">
+                                                    <div class="flex-shrink-0">
+                                                        @if($notification->type === 'certificate_approved')
+                                                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                                                </svg>
+                                                            </div>
+                                                        @elseif($notification->type === 'reply')
+                                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
+                                                                </svg>
+                                                            </div>
+                                                        @else
+                                                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                                                <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.894A1 1 0 0018 16V3z" clip-rule="evenodd"></path>
+                                                                </svg>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $notification->title }}</p>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ Str::limit($notification->message, 60) }}</p>
+                                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        @empty
+                                            <div class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                                <svg class="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM11 19H6.5A2.5 2.5 0 014 16.5v-9A2.5 2.5 0 016.5 5h11A2.5 2.5 0 0120 7.5V11"></path>
+                                                </svg>
+                                                <p class="text-sm">No notifications yet</p>
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- User Menu -->
                             <div class="relative" x-data="{ open: false }">
                                 <button @click="open = !open" class="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
@@ -354,6 +426,30 @@
         $('#mobile-menu-toggle').on('click', function() {
             $('#mobile-menu').toggleClass('hidden');
         });
+        
+        // Mark all notifications as read
+        window.markAllAsRead = function() {
+            $.post('{{ route("notifications.mark-all-read") }}', {
+                _token: $('meta[name="csrf-token"]').attr('content')
+            }, function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    location.reload();
+                }
+            }).fail(function() {
+                toastr.error('Error marking notifications as read');
+            });
+        };
+        
+        // Hide page loader when page is fully loaded
+        $(window).on('load', function() {
+            $('#page-loader').fadeOut(300);
+        });
+        
+        // Fallback: hide loader after 3 seconds
+        setTimeout(function() {
+            $('#page-loader').fadeOut(300);
+        }, 3000);
     </script>
 </body>
 </html>

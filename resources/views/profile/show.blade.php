@@ -3,6 +3,13 @@
 @section('title', 'My Profile')
 
 @section('content')
+<!-- Page Loader -->
+<div id="page-loader" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
+    <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p class="text-gray-600 dark:text-gray-400">Loading profile...</p>
+    </div>
+</div>
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
         <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8">

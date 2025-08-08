@@ -3,6 +3,14 @@
 @section('title', 'Dashboard')
 
 @section('content')
+<!-- Page Loader -->
+<div id="page-loader" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
+    <div class="text-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p class="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+    </div>
+</div>
+
 <div class="bg-white dark:bg-gray-900 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Welcome Section -->
@@ -77,7 +85,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach(auth()->user()->enrollments()->with('course.lessons')->latest()->take(3)->get() as $enrollment)
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                            <div class="h-32 bg-gradient-to-br from-blue-500 to-purple-600"></div>
+                            <div class="h-32 bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                                @if($enrollment->course->getFirstMediaUrl('thumbnails'))
+                                    <img src="{{ $enrollment->course->getFirstMediaUrl('thumbnails') }}" alt="{{ $enrollment->course->title }}" class="w-full h-full object-cover">
+                                @endif
+                            </div>
                             <div class="p-6">
                                 <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ $enrollment->course->title }}</h3>
                                 <div class="flex items-center justify-between mb-4">
@@ -110,6 +122,9 @@
                 @foreach(\App\Models\Course::where('status', 'published')->where('is_free', true)->with(['teacher', 'category'])->take(4)->get() as $course)
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
                         <div class="h-32 bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                            @if($course->getFirstMediaUrl('thumbnails'))
+                                <img src="{{ $course->getFirstMediaUrl('thumbnails') }}" alt="{{ $course->title }}" class="w-full h-full object-cover">
+                            @endif
                             <div class="absolute top-2 left-2">
                                 <span class="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">Free</span>
                             </div>

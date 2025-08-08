@@ -17,12 +17,20 @@ class DiscussionController extends Controller
 
         $request->validate([
             'content' => 'required|string|max:1000',
+            'media' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif|max:10240',
         ]);
 
-        $discussion->replies()->create([
+        $reply = Discussion::create([
             'user_id' => Auth::id(),
+            'lesson_id' => $discussion->lesson_id,
             'content' => $request->content,
+            'parent_id' => $discussion->id,
         ]);
+
+        if ($request->hasFile('media')) {
+            $reply->addMediaFromRequest('media')
+                  ->toMediaCollection('attachments');
+        }
 
         return redirect()->back()->with('success', 'Reply posted successfully!');
     }

@@ -157,8 +157,8 @@
                                     <p class="text-xs text-green-600 dark:text-green-400">Certificate Generated</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ $enrollment->completed_at->format('M d, Y') }}</p>
                                 </div>
-                                @if($enrollment->certificate)
-                                    <a href="{{ route('certificate.show', $enrollment->certificate) }}" target="_blank" 
+                                @if($enrollment->certificateRelation)
+                                    <a href="{{ route('certificate.show', $enrollment->certificateRelation) }}" target="_blank" 
                                        class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-xs">
                                         View Certificate
                                     </a>
@@ -201,34 +201,43 @@
 let currentEnrollmentId = null;
 
 function approveCertification(enrollmentId) {
-    if (!confirm('Are you sure you want to approve this certification? This will generate a certificate for the student.')) {
-        return;
-    }
-
-    fetch(`/teacher/certifications/${enrollmentId}/approve`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    Swal.fire({
+        title: 'Approve Certification',
+        text: 'Are you sure you want to approve this certification? This will generate a certificate for the student.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#059669',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, approve it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch(`/teacher/certifications/${enrollmentId}/approve`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`enrollment-${enrollmentId}`).remove();
+                    toastr.success(data.message);
+                    
+                    // Check if no more enrollments
+                    if (document.querySelectorAll('[id^="enrollment-"]').length === 0) {
+                        location.reload();
+                    }
+                } else {
+                    toastr.error(data.message || 'Failed to approve certification');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                toastr.error('An error occurred while approving the certification');
+            });
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            document.getElementById(`enrollment-${enrollmentId}`).remove();
-            toastr.success(data.message);
-            
-            // Check if no more enrollments
-            if (document.querySelectorAll('[id^="enrollment-"]').length === 0) {
-                location.reload();
-            }
-        } else {
-            toastr.error(data.message || 'Failed to approve certification');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        toastr.error('An error occurred while approving the certification');
     });
 }
 

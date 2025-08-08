@@ -16,15 +16,33 @@ class DiscussionController extends Controller
             ->whereNull('parent_id')
             ->where('status', 'approved')
             ->with(['user', 'replies' => function($query) {
-                $query->where('status', 'approved')->with('user');
+                $query->where('status', 'approved')
+                    ->with(['user', 'replies' => function($subQuery) {
+                        $subQuery->where('status', 'approved')->with('user')->orderBy('created_at', 'asc');
+                    }])
+                    ->orderBy('created_at', 'asc');
             }])
             ->latest()
             ->get()
             ->map(function($discussion) {
                 $discussion->user->profile_picture_url = $discussion->user->getProfilePictureUrl();
+                $discussion->user->is_course_author = $discussion->user->id === $discussion->lesson->course->teacher_id;
+                $mediaUrl = $discussion->getFirstMediaUrl('attachments');
+                $discussion->media_url = $mediaUrl ? url($mediaUrl) : null;
                 if ($discussion->replies) {
                     $discussion->replies->each(function($reply) {
                         $reply->user->profile_picture_url = $reply->user->getProfilePictureUrl();
+                        $reply->user->is_course_author = $reply->user->id === $reply->lesson->course->teacher_id;
+                        $mediaUrl = $reply->getFirstMediaUrl('attachments');
+                        $reply->media_url = $mediaUrl ? url($mediaUrl) : null;
+                        if ($reply->replies) {
+                            $reply->replies->each(function($subReply) {
+                                $subReply->user->profile_picture_url = $subReply->user->getProfilePictureUrl();
+                                $subReply->user->is_course_author = $subReply->user->id === $subReply->lesson->course->teacher_id;
+                                $mediaUrl = $subReply->getFirstMediaUrl('attachments');
+                                $subReply->media_url = $mediaUrl ? url($mediaUrl) : null;
+                            });
+                        }
                     });
                 }
                 return $discussion;
@@ -48,11 +66,11 @@ class DiscussionController extends Controller
         $request->validate([
             'content' => 'required|string|max:1000',
             'parent_id' => 'nullable|integer|exists:discussions,id',
-            'media' => 'nullable|file|max:10240',
+            'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,docx,doc,mp3,wav,ogg,webm,mp4,avi,mov|max:10240',
         ]);
 
-        // Check enrollment (teachers can always comment on their own courses)
-        if (!Auth::user()->isTeacher() || $lesson->course->teacher_id !== Auth::id()) {
+        // Check enrollment (course authors can always comment)
+        if ($lesson->course->teacher_id !== Auth::id()) {
             $enrollment = Auth::user()->enrollments()->where('course_id', $lesson->course_id)->first();
             if (!$enrollment) {
                 return response()->json(['error' => 'You must be enrolled to comment'], 403);
@@ -80,15 +98,7 @@ class DiscussionController extends Controller
             }
         }
 
-        // Only teachers can upload media
-        if ($request->hasFile('media') && !Auth::user()->isTeacher()) {
-            return response()->json(['error' => 'Only teachers can attach media to comments'], 403);
-        }
-        
-        // Teachers can comment on any lesson in their courses
-        if (Auth::user()->isTeacher() && $lesson->course->teacher_id !== Auth::id()) {
-            return response()->json(['error' => 'You can only comment on your own course lessons'], 403);
-        }
+        // All users can upload media now
 
         $discussion = Discussion::create([
             'user_id' => Auth::id(),
@@ -102,6 +112,42 @@ class DiscussionController extends Controller
 
         if ($request->hasFile('media')) {
             $discussion->addMediaFromRequest('media')->toMediaCollection('attachments');
+        }
+
+        // Create notification for course teacher (if not the teacher posting)
+        if (Auth::id() !== $lesson->course->teacher_id) {
+            \App\Models\Notification::create([
+                'user_id' => $lesson->course->teacher_id,
+                'title' => 'New Comment on Your Course',
+                'message' => Auth::user()->name . ' commented on "' . $lesson->title . '" in your course "' . $lesson->course->title . '"',
+                'type' => 'comment',
+                'data' => json_encode([
+                    'lesson_id' => $lesson->id,
+                    'course_id' => $lesson->course_id,
+                    'discussion_id' => $discussion->id,
+                    'user_name' => Auth::user()->name
+                ])
+            ]);
+        }
+
+        // If replying to someone, notify the original commenter
+        if ($request->parent_id) {
+            $parentDiscussion = Discussion::find($request->parent_id);
+            if ($parentDiscussion && $parentDiscussion->user_id !== Auth::id()) {
+                \App\Models\Notification::create([
+                    'user_id' => $parentDiscussion->user_id,
+                    'title' => 'Reply to Your Comment',
+                    'message' => Auth::user()->name . ' replied to your comment on "' . $lesson->title . '"',
+                    'type' => 'reply',
+                    'data' => json_encode([
+                        'lesson_id' => $lesson->id,
+                        'course_id' => $lesson->course_id,
+                        'discussion_id' => $discussion->id,
+                        'parent_discussion_id' => $request->parent_id,
+                        'user_name' => Auth::user()->name
+                    ])
+                ]);
+            }
         }
 
         // Mark comment requirement as completed
@@ -119,12 +165,16 @@ class DiscussionController extends Controller
 
     public function resolve(Discussion $discussion)
     {
-        // Only lesson owner or admin can resolve
-        if (Auth::id() !== $discussion->lesson->course->teacher_id && !Auth::user()->isAdmin()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        // Only course author can resolve
+        if (Auth::id() !== $discussion->lesson->course->teacher_id) {
+            return response()->json(['error' => 'Only course authors can resolve discussions'], 403);
         }
 
-        $discussion->update(['is_resolved' => true]);
-        return response()->json(['success' => true]);
+        $discussion->update(['is_resolved' => !$discussion->is_resolved]);
+        return response()->json([
+            'success' => true, 
+            'message' => $discussion->is_resolved ? 'Discussion marked as resolved' : 'Discussion reopened',
+            'is_resolved' => $discussion->is_resolved
+        ]);
     }
 }

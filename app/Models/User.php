@@ -143,4 +143,34 @@ class User extends Authenticatable implements HasMedia
         ];
         return $countries[$this->country_code] ?? $this->country_code;
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
+
+    public function getTeacherRank()
+    {
+        if ($this->role !== 'teacher') {
+            return null;
+        }
+        
+        $courseCount = $this->courses()->where('status', 'published')->count();
+        $avgRating = $this->courses()->avg('rating') ?? 0;
+        
+        if ($courseCount >= 10 && $avgRating >= 4.5) {
+            return 'Expert Instructor';
+        } elseif ($courseCount >= 5 && $avgRating >= 4.0) {
+            return 'Senior Instructor';
+        } elseif ($courseCount >= 2 && $avgRating >= 3.5) {
+            return 'Instructor';
+        } else {
+            return 'New Instructor';
+        }
+    }
 }

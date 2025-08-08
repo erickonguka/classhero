@@ -33,6 +33,11 @@
                             <div class="flex-1">
                                 <div class="flex items-center space-x-2 mb-2">
                                     <h4 class="font-semibold text-gray-900 dark:text-white">{{ $discussion->user->name }}</h4>
+                                    @if($discussion->lesson->course->teacher_id === $discussion->user_id)
+                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Course Author</span>
+                                    @elseif($discussion->user->role === 'teacher')
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Teacher</span>
+                                    @endif
                                     <span class="text-sm text-gray-500 dark:text-gray-400">{{ $discussion->created_at->diffForHumans() }}</span>
                                     @if($discussion->is_resolved)
                                         <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Resolved</span>
@@ -56,12 +61,29 @@
                                                 <div class="flex-1">
                                                     <div class="flex items-center space-x-2 mb-1">
                                                         <span class="font-medium text-sm text-gray-900 dark:text-white">{{ $reply->user->name }}</span>
-                                                        @if($reply->user->role === 'teacher')
-                                                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Teacher</span>
+                                                        @if($reply->lesson->course->teacher_id === $reply->user_id)
+                                                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Course Author</span>
+                                                        @elseif($reply->user->role === 'teacher')
+                                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Teacher</span>
                                                         @endif
                                                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ $reply->created_at->diffForHumans() }}</span>
                                                     </div>
                                                     <p class="text-sm text-gray-700 dark:text-gray-300">{{ $reply->content }}</p>
+                                                    @if($reply->getFirstMediaUrl('attachments'))
+                                                        <div class="mt-2">
+                                                            @php $media = $reply->getFirstMedia('attachments'); @endphp
+                                                            @if($media && in_array($media->mime_type, ['image/jpeg', 'image/png', 'image/gif']))
+                                                                <img src="{{ $reply->getFirstMediaUrl('attachments') }}" alt="Attachment" class="max-w-xs rounded-lg">
+                                                            @else
+                                                                <a href="{{ $reply->getFirstMediaUrl('attachments') }}" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 text-sm">
+                                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                                    </svg>
+                                                                    Download {{ $media ? $media->name : 'Attachment' }}
+                                                                </a>
+                                                            @endif
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @endforeach
@@ -83,10 +105,12 @@
                                 </div>
                                 
                                 <div id="reply-form-{{ $discussion->id }}" class="hidden mt-4">
-                                    <form method="POST" action="{{ route('teacher.discussions.reply', $discussion) }}">
+                                    <form method="POST" action="{{ route('teacher.discussions.reply', $discussion) }}" enctype="multipart/form-data">
                                         @csrf
                                         <textarea name="content" rows="3" placeholder="Write your reply..." required
-                                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"></textarea>
+                                                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white mb-2"></textarea>
+                                        <input type="file" name="media" accept=".pdf,.jpg,.jpeg,.png,.gif" 
+                                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white mb-2">
                                         <div class="mt-2 flex justify-end space-x-2">
                                             <button type="button" onclick="hideReplyForm({{ $discussion->id }})" class="text-gray-600 hover:text-gray-700 dark:text-gray-400 text-sm">
                                                 Cancel

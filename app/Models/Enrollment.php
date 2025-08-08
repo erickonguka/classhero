@@ -50,6 +50,48 @@ class Enrollment extends Model
 
     public function certificate()
     {
-        return $this->hasOne(Certificate::class);
+        return Certificate::where('user_id', $this->user_id)
+            ->where('course_id', $this->course_id)
+            ->first();
+    }
+    
+    public function certificateRelation()
+    {
+        return $this->hasOne(Certificate::class, 'user_id', 'user_id')
+            ->where('certificates.course_id', $this->course_id);
+    }
+
+    public function recalculateProgress()
+    {
+        $totalLessons = $this->course->lessons()->count();
+        $completedLessons = LessonProgress::where('user_id', $this->user_id)
+            ->whereHas('lesson', function($query) {
+                $query->where('course_id', $this->course_id);
+            })
+            ->where('is_completed', true)
+            ->count();
+
+        $progressPercentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100) : 0;
+
+        // Reset completion status if progress is no longer 100% due to new lessons
+        $updateData = [
+            'total_lessons' => $totalLessons,
+            'lessons_completed' => $completedLessons,
+            'progress_percentage' => $progressPercentage,
+        ];
+
+        // If progress dropped below 100%, reset completion status
+        if ($progressPercentage < 100 && $this->completed_at) {
+            $updateData['completed_at'] = null;
+        }
+
+        $this->update($updateData);
+
+        return $this;
+    }
+
+    public function isFullyCompleted()
+    {
+        return $this->progress_percentage == 100 && $this->course->lessons()->count() > 0;
     }
 }
