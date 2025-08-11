@@ -158,9 +158,9 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ $enrollment->completed_at->format('M d, Y') }}</p>
                                 </div>
                                 @if($enrollment->certificateRelation)
-                                    <a href="{{ route('certificate.show', $enrollment->certificateRelation) }}" target="_blank" 
-                                       class="text-blue-600 hover:text-blue-700 dark:text-blue-400 text-xs">
-                                        View Certificate
+                                    <a href="{{ route('teacher.certificates.view', $enrollment->certificateRelation) }}" target="_blank" 
+                                       class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">
+                                        Preview
                                     </a>
                                 @endif
                             </div>
@@ -230,7 +230,7 @@ function approveCertification(enrollmentId) {
                         location.reload();
                     }
                 } else {
-                    toastr.error(data.message || 'Failed to approve certification');
+                    toastr.error(data.error || data.message || 'Failed to approve certification');
                 }
             })
             .catch(error => {
@@ -280,7 +280,7 @@ function confirmReject() {
                 location.reload();
             }
         } else {
-            toastr.error(data.message || 'Failed to reject certification');
+            toastr.error(data.error || data.message || 'Failed to reject certification');
         }
     })
     .catch(error => {

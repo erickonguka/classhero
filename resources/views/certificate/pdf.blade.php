@@ -3,243 +3,323 @@
 <head>
     <meta charset="utf-8">
     <title>Certificate of Completion</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @page {
-            size: A4 landscape;
-            margin: 0;
+        @page { 
+            /* size: A4 landscape;  */
+            margin: 0; 
         }
-
-        /* Tip for professional results: For some PDF renderers, you may need to
-           embed the font file (e.g., as a Base64 string) instead of linking to Google Fonts. */
+        
         body {
-            font-family: 'Poppins', 'DejaVu Sans', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f8f9fa;
-            color: #333;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-
-        .certificate-wrapper {
-            width: 297mm;
-            height: 210mm;
-            padding: 10mm;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .certificate-container {
-            width: 100%;
-            height: 100%;
-            background: white;
-            border: 4px solid #ffc107;
-            border-radius: 15px;
-            padding: 30px;
-            box-sizing: border-box;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            /* width: 297mm;
+            height: 210mm; */
+            background: #fef3c7;
             position: relative;
+        }
+        
+        .page {
+            /* width: 297mm;
+            height: 210mm; */
+            padding: 10mm;
+            position: relative;
+        }
+        
+        .certificate {
+            /* width: 277mm; */
+            height: 165mm;
+            background: #ffffff;
+            border: 2mm solid #facc15;
+            position: relative;
+            padding: 10mm;
+        }
+        
+        /* Decorative elements */
+        .decor {
+            position: absolute;
+            border-radius: 50%;
+            background: #fde68a;
+            opacity: 0.3;
+            width: 30mm;
+            height: 30mm;
+        }
+        
+        .decor.top-left { 
+            top: -15mm; 
+            left: -15mm; 
+        }
+        
+        .decor.bottom-right { 
+            bottom: -15mm; 
+            right: -15mm; 
+        }
+
+        /* Header Section */
+        .header { 
+            text-align: center; 
+            margin-bottom: 8mm;
+        }
+        
+        .icon-circle {
+            width: 12mm;
+            height: 12mm;
+            background: #facc15;
+            border-radius: 50%;
+            margin: 0 auto 4mm;
+            position: relative;
+            color: #1f2937;
+            font-size: 6mm;
+            font-weight: bold;
+            text-align: center;
+            padding-top: 3mm;
+        }
+                
+        .header-title { 
+            font-size: 12mm; 
+            font-weight: bold; 
+            color: #1f2937; 
+            margin: 0 0 3mm 0;
+            text-align: center;
+        }
+        
+        .header-sub { 
+            font-size: 4mm; 
+            color: #4b5563; 
+            margin: 0;
             text-align: center;
         }
 
-        /* Decorative corner shapes */
-        .certificate-container::before,
-        .certificate-container::after {
-            content: '';
+        /* Name Section */
+        .name-section { 
+            text-align: center;
+            margin: 12mm 0;
+        }
+        
+        .student-name {
+            font-size: 14mm;
+            font-weight: bold;
+            color: #b45309;
+            margin: 0 0 3mm 0;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .name-sub { 
+            font-size: 4mm; 
+            color: #4b5563; 
+            margin: 0;
+            text-align: center;
+        }
+
+        /* Course Section */
+        .course-section { 
+            text-align: center;
+            margin: 10mm 0;
+        }
+        
+        .course-title { 
+            font-size: 8mm; 
+            font-weight: bold; 
+            color: #1f2937; 
+            margin: 0 0 4mm 0;
+            text-align: center;
+            line-height: 1.3;
+        }
+        
+        .course-meta { 
+            font-size: 3.5mm; 
+            color: #4b5563; 
+            text-align: center;
+            margin: 0;
+        }
+        
+        .course-meta span {
+            margin: 0 4mm;
+        }
+
+        /* Footer Section */
+        .footer {
             position: absolute;
-            width: 150px;
-            height: 150px;
-            background-color: #ffc107;
-            opacity: 0.1;
-            z-index: 1;
-            border-radius: 50%;
+            bottom: 25mm;
+            left: 15mm;
+            right: 15mm;
+            height: 20mm;
         }
-
-        .certificate-container::before { top: -50px; left: -50px; }
-        .certificate-container::after { bottom: -50px; right: -50px; }
         
-        .content {
-            position: relative;
-            z-index: 2;
-            height: 100%;
-            display: table;
+        .footer-row {
             width: 100%;
+            margin: 0;
+            padding: 0;
         }
         
-        .content-cell {
-            display: table-cell;
-            vertical-align: middle;
-        }
-
-        .badge {
-            width: 60px;
-            height: 60px;
-            background-color: #ffc107;
-            border-radius: 50%;
-            margin: 0 auto 15px auto;
-            line-height: 60px;
-            font-size: 30px;
-            color: white;
-        }
-
-        .main-title {
-            font-size: 32px;
-            font-weight: 600;
-            color: #343a40;
-            margin: 0;
-        }
-
-        .subtitle {
-            font-size: 16px;
-            color: #6c757d;
-            margin: 5px 0 15px 0;
-        }
-
-        .recipient-name {
-            font-size: 44px;
-            font-weight: 700;
-            color: #f58220;
-            margin: 0;
-        }
-
-        .completion-text {
-            font-size: 16px;
-            color: #495057;
-            margin: 5px 0 20px 0;
-        }
-
-        .course-title {
-            font-size: 26px;
-            font-weight: 600;
-            color: #343a40;
-            margin: 0;
-        }
-
-        .course-meta {
-            margin: 15px 0 30px 0;
-            font-size: 14px;
-            color: #6c757d;
+        .footer-item {
+            width: 33.333%;
+            float: left;
+            text-align: center;
+            font-size: 3.5mm;
+            padding: 0 2mm;
         }
         
-        .meta-item {
-            display: inline-block;
-            margin: 0 12px;
-        }
-        .meta-item span { vertical-align: middle; }
-
-        /* Robust table-based footer */
-        .footer-details {
-            display: table;
-            width: 100%;
-            table-layout: fixed;
-            border-top: 1px solid #dee2e6;
-            padding-top: 15px;
-        }
-
-        .footer-column {
-            display: table-cell;
-            width: 33.33%;
-            vertical-align: top;
-        }
-
-        .footer-label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-
-        .footer-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: #343a40;
+        .footer-line { 
+            height: 0.5mm; 
+            background: #9ca3af; 
+            width: 30mm; 
+            margin: 0 auto 2mm; 
         }
         
+        .footer-label { 
+            color: #4b5563; 
+            margin-bottom: 1mm;
+            font-size: 3mm;
+        }
+        
+        .footer-value { 
+            font-weight: bold; 
+            color: #1f2937; 
+            font-size: 4mm;
+        }
+
         .platform-logo {
-            width: 45px;
-            height: 45px;
-            background-color: #6f42c1;
+            width: 12mm;
+            height: 12mm;
             border-radius: 50%;
-            margin: 0 auto 8px auto;
-            line-height: 45px;
+            background: #3b82f6;
+            margin: 0 auto 2mm;
             color: white;
-            font-size: 18px;
-            font-weight: 700;
+            font-weight: bold;
+            font-size: 4mm;
+            text-align: center;
+            padding-top: 3mm;
+        }
+        
+        .platform-name {
+            font-size: 4mm;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 1mm;
+        }
+        
+        .platform-sub {
+            font-size: 2.5mm; 
+            color: #6b7280;
         }
 
-        .certificate-info {
+        /* Details Section */
+        .details {
             position: absolute;
-            bottom: 10px;
-            left: 30px;
-            right: 30px;
-            z-index: 3;
-            font-size: 9px;
-            color: #adb5bd;
+            bottom: 5mm;
+            left: 15mm;
+            right: 15mm;
+            font-size: 3mm;
+            color: #6b7280;
+            border-top: 0.5mm solid #e5e7eb;
+            padding-top: 2mm;
         }
-        .cert-no { float: left; }
-        .ver-code { float: right; }
+        
+        .detail-left {
+            float: left;
+        }
+        
+        .detail-right {
+            float: right;
+        }
+        
+        /* Clear floats */
+        .clearfix:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        
+        /* PDF specific fixes */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        td {
+            vertical-align: top;
+            padding: 0;
+        }
 
+        /* Link styling for PDF */
+        a {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+
+        .details a {
+            font-size: 3mm;
+            color: #3b82f6;
+        }
     </style>
 </head>
 <body>
-    <div class="certificate-wrapper">
-        <div class="certificate-container">
-            <div class="content">
-                <div class="content-cell">
-                    <div class="badge">✔</div>
+    <div class="page">
+        <div class="certificate">
+            <div class="decor top-left"></div>
+            <div class="decor bottom-right"></div>
 
-                    <h1 class="main-title">Certificate of Completion</h1>
-                    <p class="subtitle">This certifies that</p>
+            <!-- Header -->
+            <div class="header">
+                <div class="icon-circle">✓</div>
+                <h1 class="header-title">Certificate of Completion</h1>
+                <p class="header-sub">This certifies that</p>
+            </div>
 
-                    <h2 class="recipient-name">{{ $certificate->user->name ?? 'Alice Wilson' }}</h2>
-                    <p class="completion-text">has successfully completed the course</p>
+            <!-- Student Name -->
+            <div class="name-section">
+                <h2 class="student-name">{{ $certificate->user->name }}</h2>
+                <p class="name-sub">has successfully completed the course</p>
+            </div>
 
-                    <h3 class="course-title">{{ $certificate->course->title ?? 'iOS App Development with Swift' }}</h3>
+            <!-- Course Info -->
+            <div class="course-section">
+                <h3 class="course-title">{{ $certificate->course->title }}</h3>
+                <div class="course-meta">
+                    <span>📖 {{ $certificate->course->lessons->count() }} Lessons</span>
+                    @if($certificate->course->duration_hours)
+                        <span>🕔 {{ $certificate->course->duration_hours }} Hours</span>
+                    @endif
+                    <span>⚡ {{ ucfirst($certificate->course->difficulty) }}</span>
+                </div>
+            </div>
 
-                    <div class="course-meta">
-                        @if($certificate->course->lessons)
-                        <div class="meta-item">
-                            <span>📖</span>
-                            <span>{{ $certificate->course->lessons->count() ?? 3 }} Lessons</span>
-                        </div>
-                        @endif
-                        @if($certificate->course->duration_hours)
-                        <div class="meta-item">
-                            <span>🕔</span>
-                            <span>{{ $certificate->course->duration_hours ?? 50 }} Hours</span>
-                        </div>
-                        @endif
-                        @if($certificate->course->difficulty)
-                        <div class="meta-item">
-                            <span>⚡️</span>
-                            <span>{{ ucfirst($certificate->course->difficulty) ?? 'Advanced' }}</span>
-                        </div>
-                        @endif
+            <!-- Footer with 3 columns -->
+            <div class="footer">
+                <div class="footer-row clearfix">
+                    <!-- Instructor -->
+                    <div class="footer-item">
+                        <div class="footer-line"></div>
+                        <div class="footer-label">Instructor</div>
+                        <div class="footer-value">{{ $certificate->course->teacher->name }}</div>
                     </div>
-
-                    <div class="footer-details">
-                        <div class="footer-column">
-                            <p class="footer-label">Instructor</p>
-                            <p class="footer-value">{{ $certificate->course->teacher->name ?? 'Sarah Johnson' }}</p>
-                        </div>
-                        <div class="footer-column">
-                            <div class="platform-logo">CH</div>
-                            <p class="footer-value" style="line-height: 1.2;">{{ $certificate->course->platform_name ?? 'ClassHero' }}<br><span style="font-size: 11px; color: #6c757d; font-weight: normal;">E-Learning Platform</span></p>
-                        </div>
-                        <div class="footer-column">
-                            <p class="footer-label">Date Completed</p>
-                            <p class="footer-value">{{ isset($certificate->issued_at) ? $certificate->issued_at->format('M j, Y') : 'Aug 8, 2025' }}</p>
-                        </div>
+                    
+                    <!-- Platform -->
+                    <div class="footer-item">
+                        <div class="platform-logo">CH</div>
+                        <div class="platform-name">ClassHero</div>
+                        <div class="platform-sub">E-Learning Platform</div>
+                    </div>
+                    
+                    <!-- Date -->
+                    <div class="footer-item">
+                        <div class="footer-line"></div>
+                        <div class="footer-label">Date Completed</div>
+                        <div class="footer-value">{{ $certificate->issued_at->format('M j, Y') }}</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="certificate-info">
-                <span class="cert-no">Certificate No: {{ $certificate->certificate_number ?? 'CERT-4UD8OM4Z' }}</span>
-                <span class="ver-code">Verification Code: {{ isset($certificate->verification_code) ? substr($certificate->verification_code, 0, 10) : 'KMqSH3xm' }}...</span>
+
+            <!-- Certificate Details -->
+            <div class="details clearfix">
+                <div class="detail-left">Certificate No: {{ $certificate->certificate_number }}</div>
+                <div class="detail-right">
+                    Verify at: <a href="{{ url('/certificate/verify/' . $certificate->verification_code) }}" style="color: #3b82f6; text-decoration: underline;">
+                        {{ config('app.url') }}/verify/{{ substr($certificate->verification_code, 0, 8) }}...
+                    </a>
+                </div>
             </div>
         </div>
     </div>

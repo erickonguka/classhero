@@ -32,7 +32,8 @@ class ReviewController extends Controller
         );
 
         // Update course average rating
-        $course->updateRating();
+        $avgRating = $course->reviews()->avg('rating') ?? 0;
+        $course->update(['rating' => round($avgRating, 1)]);
 
         // Notify course author about new review
         \App\Models\Notification::create([
@@ -47,10 +48,14 @@ class ReviewController extends Controller
             ])
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Review submitted successfully',
-            'review' => $review->load('user')
-        ]);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Review submitted successfully',
+                'review' => $review->load('user')
+            ]);
+        }
+        
+        return back()->with('success', 'Review submitted successfully');
     }
 }

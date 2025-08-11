@@ -41,6 +41,12 @@
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $enrollment->user->name }}</div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">{{ $enrollment->user->email }}</div>
+                                            @if($enrollment->user->country_code)
+                                                <div class="text-xs text-gray-400 flex items-center mt-1">
+                                                    <span class="mr-1">{{ $enrollment->user->getCountryFlag() }}</span>
+                                                    {{ $enrollment->user->getCountryName() }}
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>

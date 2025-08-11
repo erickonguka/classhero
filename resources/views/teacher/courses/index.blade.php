@@ -58,7 +58,7 @@
                                 {{ $course->category->name }}
                             </span>
                         </div>
-                        <div class="absolute top-4 right-4">
+                        <div class="absolute top-4 right-4 z-10">
                             <span class="bg-{{ $course->status === 'published' ? 'green' : 'yellow' }}-500 text-white px-3 py-1 rounded-full text-sm font-medium">
                                 {{ ucfirst($course->status) }}
                             </span>
@@ -85,14 +85,10 @@
                             <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-xs font-medium text-center transition-colors">
                                 Preview
                             </a>
-                            <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" onclick="return confirm('Delete this course?')" 
-                                        class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors">
-                                    Delete
-                                </button>
-                            </form>
+                            <button onclick="confirmDeleteCourse('{{ $course->slug }}', '{{ addslashes($course->title) }}')" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors">
+                                Delete
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -118,3 +114,56 @@
     @endif
 </div>
 @endsection
+
+<script>
+function confirmDeleteCourse(courseSlug, courseTitle) {
+    Swal.fire({
+        title: 'Delete Course',
+        text: `Are you sure you want to delete "${courseTitle}"? This action cannot be undone and will delete all lessons, quizzes, and student progress.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteCourse(courseSlug);
+        }
+    });
+}
+
+function deleteCourse(courseSlug) {
+    fetch(`/teacher/courses/${courseSlug}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: 'Deleted!',
+                text: data.message || 'Course deleted successfully!',
+                icon: 'success',
+                confirmButtonColor: '#10b981'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message || 'Failed to delete course');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message,
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    });
+}
+</script>

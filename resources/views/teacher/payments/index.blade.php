@@ -5,6 +5,15 @@
 
 @section('content')
 <div class="p-6">
+    <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-xl p-8 text-center mb-6">
+        <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+            </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-blue-800 dark:text-blue-200 mb-2">Payments Coming Soon!</h2>
+        <p class="text-blue-700 dark:text-blue-300">We're working on implementing the payment system. All courses are currently free while we prepare this feature.</p>
+    </div>
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <p class="text-gray-600 dark:text-gray-400">Track payments and earnings across all your courses</p>
         <div class="flex gap-2">

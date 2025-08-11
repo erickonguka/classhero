@@ -13,6 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'check.lesson.access' => \App\Http\Middleware\CheckLessonAccess::class,
+            'track.activity' => \App\Http\Middleware\TrackUserActivity::class,
+            'check.banned' => \App\Http\Middleware\CheckBannedUser::class,
+            'mfa.verified' => \App\Http\Middleware\EnsureMfaVerified::class,
+        ]);
+        
+        $middleware->web(append: [
+            \App\Http\Middleware\TrackUserActivity::class,
+            \App\Http\Middleware\CheckBannedUser::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

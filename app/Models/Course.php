@@ -33,6 +33,7 @@ class Course extends Model implements HasMedia
         'rating_count',
         'requirements',
         'what_you_learn',
+        'tags',
         'has_certificate',
         'rejection_reason',
     ];
@@ -43,6 +44,7 @@ class Course extends Model implements HasMedia
         'rating' => 'decimal:2',
         'requirements' => 'array',
         'what_you_learn' => 'array',
+        'tags' => 'array',
         'curriculum' => 'array',
         'total_lessons' => 'integer',
         'enrolled_count' => 'integer',

@@ -11,7 +11,7 @@
             <p class="text-gray-600 dark:text-gray-400">Add a quiz for {{ $lesson->title }}</p>
         </div>
 
-        <form action="{{ route('teacher.lessons.quiz.store', $lesson) }}" method="POST" id="quiz-form">
+        <form action="{{ route('teacher.lessons.quiz.store', $lesson) }}" method="POST" id="quiz-form" data-ajax="true">
             @csrf
 
             <!-- Quiz Information -->
@@ -71,9 +71,9 @@
                 <a href="{{ route('teacher.lessons.show', $lesson) }}" class="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium">
                     Cancel
                 </a>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
+                <x-spinning-button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors">
                     Create Quiz
-                </button>
+                </x-spinning-button>
             </div>
         </form>
     </div>
@@ -81,6 +81,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/forms.js') }}"></script>
 <script>
 let questionIndex = 0;
 
@@ -91,6 +92,70 @@ $(document).ready(function() {
     // Handle question type changes
     $(document).on('change', '.question-type', function() {
         toggleQuestionOptions($(this));
+    });
+    
+    // Form submission with validation
+    $('#quiz-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate multiple choice questions have at least one correct answer
+        let isValid = true;
+        $('.question-item').each(function() {
+            const questionType = $(this).find('.question-type').val();
+            if (questionType === 'multiple_choice') {
+                const checkedAnswers = $(this).find('input[type="checkbox"]:checked').length;
+                if (checkedAnswers === 0) {
+                    isValid = false;
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Validation Error',
+                        text: 'Each multiple choice question must have at least one correct answer marked.',
+                        confirmButtonColor: '#3b82f6'
+                    });
+                    return false;
+                }
+            }
+        });
+        
+        if (isValid) {
+            // Submit via AJAX
+            const formData = new FormData(this);
+            const submitButton = $(this).find('button[type="submit"]');
+            
+            submitButton.prop('disabled', true).find('.spinner').removeClass('hidden');
+            
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        if (response.redirect_url) {
+                            setTimeout(() => {
+                                window.location.href = response.redirect_url;
+                            }, 1500);
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    let message = 'An error occurred';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    toastr.error(message);
+                },
+                complete: function() {
+                    submitButton.prop('disabled', false).find('.spinner').addClass('hidden');
+                }
+            });
+        }
     });
     
     // Add new question
@@ -233,7 +298,7 @@ function addNewQuestion() {
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Points</label>
-                        <input type="number" name="questions[${questionIndex}][points]" value="10" min="1" required
+                        <input type="number" name="questions[${questionIndex}][points]" value="10" min="1" max="10" required
                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
                     </div>
                 </div>

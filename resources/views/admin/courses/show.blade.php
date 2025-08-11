@@ -1,9 +1,10 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Course Details - ' . $course->title)
+@section('page-title', 'Course Details')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="space-y-6">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Course Details</h1>
         <a href="{{ route('admin.courses.index') }}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
@@ -68,6 +69,39 @@
                 <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">Rejection Reason</h3>
                     <p class="text-red-700 dark:text-red-300">{{ $course->rejection_reason }}</p>
+                </div>
+            @endif
+
+            <!-- Enrolled Students -->
+            @if($course->enrollments->count() > 0)
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Enrolled Students ({{ $course->enrollments->count() }})</h3>
+                    <div class="space-y-3 max-h-96 overflow-y-auto">
+                        @foreach($course->enrollments as $enrollment)
+                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    @if($enrollment->user->getProfilePictureUrl())
+                                        <img src="{{ $enrollment->user->getProfilePictureUrl() }}" alt="{{ $enrollment->user->name }}" class="w-8 h-8 rounded-full object-cover">
+                                    @else
+                                        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-xs font-bold">{{ substr($enrollment->user->name, 0, 1) }}</span>
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <h4 class="font-medium text-gray-900 dark:text-white text-sm">{{ $enrollment->user->name }}</h4>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">{{ $enrollment->user->email }}</p>
+                                        @if($enrollment->user->country_code)
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $enrollment->user->getCountryFlag() }} {{ $enrollment->user->getCountryName() }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $enrollment->progress_percentage }}% complete</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $enrollment->created_at->format('M d, Y') }}</div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             @endif
         </div>

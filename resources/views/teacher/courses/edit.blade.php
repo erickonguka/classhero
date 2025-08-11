@@ -13,14 +13,14 @@
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
 
-        <form action="{{ route('teacher.courses.update', $course) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form data-ajax data-success-message="Course updated successfully!" data-error-message="Failed to update course" action="{{ route('teacher.courses.update', $course) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
 
             <!-- Basic Information -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Title</label>
+                    <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Title *</label>
                     <input type="text" id="title" name="title" value="{{ old('title', $course->title) }}" required
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                     @error('title')
@@ -29,7 +29,7 @@
                 </div>
 
                 <div>
-                    <label for="category_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <label for="category_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
                     <select id="category_id" name="category_id" required
                             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                         <option value="">Select Category</option>
@@ -46,7 +46,7 @@
             </div>
 
             <div>
-                <label for="short_description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Short Description</label>
+                <label for="short_description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Short Description *</label>
                 <textarea id="short_description" name="short_description" rows="3" required
                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">{{ old('short_description', $course->short_description) }}</textarea>
                 @error('short_description')
@@ -55,7 +55,7 @@
             </div>
 
             <div>
-                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Description</label>
+                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Description *</label>
                 <textarea id="description" name="description" rows="6" required
                           class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">{{ old('description', $course->description) }}</textarea>
                 @error('description')
@@ -66,7 +66,7 @@
             <!-- Course Settings -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <label for="difficulty" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Difficulty Level</label>
+                    <label for="difficulty" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Difficulty Level *</label>
                     <select id="difficulty" name="difficulty" required
                             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                         <option value="beginner" {{ old('difficulty', $course->difficulty) == 'beginner' ? 'selected' : '' }}>Beginner</option>
@@ -79,7 +79,7 @@
                 </div>
 
                 <div>
-                    <label for="duration_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration (Hours)</label>
+                    <label for="duration_hours" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration (Hours) *</label>
                     <input type="number" id="duration_hours" name="duration_hours" value="{{ old('duration_hours', $course->duration_hours) }}" min="1"
                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                     @error('duration_hours')
@@ -87,23 +87,17 @@
                     @enderror
                 </div>
 
+                <!-- Pricing temporarily disabled -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Type</label>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="radio" name="is_free" value="1" {{ old('is_free', $course->is_free) ? 'checked' : '' }}
-                                   class="text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600">
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Free Course</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="radio" name="is_free" value="0" {{ !old('is_free', $course->is_free) ? 'checked' : '' }}
-                                   class="text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600">
-                            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Paid Course</span>
-                        </label>
+                    <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
+                        <p class="text-sm text-blue-800 dark:text-blue-200">All courses are currently free. Paid courses coming soon!</p>
+                        <input type="hidden" name="is_free" value="1">
                     </div>
                 </div>
             </div>
 
+            <!-- Pricing section commented out
             <div id="price-field" class="{{ old('is_free', $course->is_free) ? 'hidden' : '' }}">
                 <label for="price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price ($)</label>
                 <input type="number" id="price" name="price" value="{{ old('price', $course->price) }}" step="0.01" min="0"
@@ -112,6 +106,7 @@
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+            -->
 
             <!-- Course Thumbnail -->
             <div class="mb-6">
@@ -130,7 +125,7 @@
 
             <!-- Learning Outcomes -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">What You'll Learn</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">What You'll Learn *</label>
                 <div id="learning-outcomes">
                     @if(old('what_you_learn', $course->what_you_learn))
                         @foreach(old('what_you_learn', $course->what_you_learn) as $index => $outcome)
@@ -165,7 +160,7 @@
 
             <!-- Requirements -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requirements</label>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Requirements *</label>
                 <div id="requirements">
                     @if(old('requirements', $course->requirements))
                         @foreach(old('requirements', $course->requirements) as $index => $requirement)
@@ -198,13 +193,52 @@
                 </button>
             </div>
 
+            <!-- Tags -->
+            <div x-data="{ 
+                tagsInput: '{{ old('tags_input', is_array($course->tags) ? implode(', ', $course->tags) : '') }}',
+                tags: {{ json_encode(old('tags', $course->tags ?? [])) }},
+                updateTagsFromInput() {
+                    if (this.tagsInput) {
+                        this.tags = this.tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
+                    } else {
+                        this.tags = [];
+                    }
+                },
+                removeTag(index) {
+                    this.tags.splice(index, 1);
+                    this.tagsInput = this.tags.join(', ');
+                }
+            }">
+                <label for="tags_input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags *</label>
+                <input type="text" id="tags_input" name="tags_input" x-model="tagsInput" 
+                       @input="updateTagsFromInput"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                       placeholder="Enter tags separated by commas (e.g., JavaScript, Web Development, Programming)">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Separate multiple tags with commas</p>
+                <div x-show="tags.length > 0" class="flex flex-wrap gap-2 mt-2">
+                    <template x-for="(tag, index) in tags" :key="index">
+                        <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm flex items-center">
+                            <span x-text="tag"></span>
+                            <button type="button" @click="removeTag(index)" class="ml-2 text-blue-600 hover:text-blue-800">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </span>
+                    </template>
+                </div>
+                @error('tags')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div class="flex justify-end space-x-4">
                 <a href="{{ route('teacher.courses.show', $course) }}" class="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     Cancel
                 </a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                <x-spinning-button type="submit">
                     Update Course
-                </button>
+                </x-spinning-button>
             </div>
         </form>
         </div>
@@ -258,6 +292,8 @@ function addRequirement() {
     container.appendChild(div);
 }
 
+// Tags are now handled as comma-separated input
+
 function removeField(button) {
     button.parentElement.remove();
 }
@@ -273,4 +309,5 @@ function previewThumbnail(input) {
     }
 }
 </script>
+<script src="{{ asset('js/forms.js') }}"></script>
 @endsection

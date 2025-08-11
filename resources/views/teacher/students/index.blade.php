@@ -76,6 +76,12 @@
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $enrollment->user->name }}</div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">{{ $enrollment->user->email }}</div>
+                                            @if($enrollment->user->country_code)
+                                                <div class="text-xs text-gray-400 flex items-center mt-1">
+                                                    <span class="mr-1">{{ $enrollment->user->getCountryFlag() }}</span>
+                                                    {{ $enrollment->user->getCountryName() }}
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -95,7 +101,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <a href="{{ route('teacher.courses.students', $enrollment->course) }}" 
+                                        <a href="{{ route('teacher.courses.show', $enrollment->course) }}" 
                                            class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                                             View Course
                                         </a>

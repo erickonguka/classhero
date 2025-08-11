@@ -74,7 +74,7 @@ class QuizController extends Controller
             'questions.*.type' => 'required|in:multiple_choice,true_false,fill_blank',
             'questions.*.options' => 'nullable|array',
             'questions.*.correct_answers' => 'required|array',
-            'questions.*.points' => 'required|integer|min:1',
+            'questions.*.points' => 'required|integer|min:1|max:10',
         ]);
 
         $quiz->update([
@@ -101,6 +101,14 @@ class QuizController extends Controller
             ]);
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Quiz updated successfully!',
+                'redirect_url' => route('teacher.quizzes.show', $quiz)
+            ]);
+        }
+        
         return redirect()->route('teacher.quizzes.show', $quiz)
             ->with('success', 'Quiz updated successfully!');
     }

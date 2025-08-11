@@ -72,22 +72,22 @@
                                         @elseif($media->type === 'video')
                                             <div class="aspect-video bg-gray-900 rounded-lg overflow-hidden">
                                                 <video class="w-full h-full" controls>
-                                                    <source src="{{ $media->getMediaUrl() }}" type="video/mp4">
+                                                    <source src="{{ $media->file_path ? asset('storage/' . $media->file_path) : $media->getMediaUrl() }}" type="video/mp4">
                                                 </video>
                                             </div>
                                         @elseif($media->type === 'audio')
                                             <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6">
                                                 <audio class="w-full" controls>
-                                                    <source src="{{ $media->getMediaUrl() }}" type="audio/mpeg">
+                                                    <source src="{{ $media->file_path ? asset('storage/' . $media->file_path) : $media->getMediaUrl() }}" type="audio/mpeg">
                                                 </audio>
                                             </div>
                                         @elseif($media->type === 'image')
                                             <div class="text-center">
-                                                <img src="{{ $media->getMediaUrl() }}" alt="{{ $media->title }}" class="max-w-full h-auto rounded-lg shadow-lg mx-auto">
+                                                <img src="{{ $media->file_path ? asset('storage/' . $media->file_path) : $media->getMediaUrl() }}" alt="{{ $media->title }}" class="max-w-full h-auto rounded-lg shadow-lg mx-auto">
                                             </div>
                                         @elseif($media->type === 'pdf')
                                             <div class="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-                                                <iframe src="{{ $media->getMediaUrl() }}#toolbar=1" width="100%" height="600px"></iframe>
+                                                <iframe src="{{ $media->file_path ? asset('storage/' . $media->file_path) : $media->getMediaUrl() }}#toolbar=1" width="100%" height="600px"></iframe>
                                             </div>
                                         @elseif($media->type === 'document')
                                             <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-6 text-center">
@@ -95,7 +95,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                 </svg>
                                                 <p class="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">{{ $media->title ?: 'Document' }}</p>
-                                                <a href="{{ $media->getMediaUrl() }}" download class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors inline-block">
+                                                <a href="{{ $media->file_path ? asset('storage/' . $media->file_path) : $media->getMediaUrl() }}" download class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors inline-block">
                                                     Download
                                                 </a>
                                             </div>
@@ -291,24 +291,41 @@
                     <!-- Lesson List -->
                     <div class="space-y-2">
                         @foreach($course->lessons as $courseLesson)
+                            @php
+                                $isCompleted = ($isEnrolled || $isTeacher) && auth()->user()->lessonProgress()->where('lesson_id', $courseLesson->id)->where('is_completed', true)->exists();
+                                $canAccess = $isTeacher || $courseLesson->is_free || ($isEnrolled && ($courseLesson->order == 1 || $isCompleted));
+                                
+                                // Check if previous lesson is completed for progression
+                                if ($isEnrolled && !$isTeacher && $courseLesson->order > 1) {
+                                    $previousLesson = $course->lessons()->where('order', '<', $courseLesson->order)->orderBy('order', 'desc')->first();
+                                    if ($previousLesson) {
+                                        $previousCompleted = auth()->user()->lessonProgress()->where('lesson_id', $previousLesson->id)->where('is_completed', true)->exists();
+                                        $canAccess = $canAccess && $previousCompleted;
+                                    }
+                                }
+                            @endphp
                             <div class="flex items-center space-x-3 p-3 rounded-lg {{ $courseLesson->id === $lesson->id ? 'bg-blue-50 dark:bg-blue-900' : 'hover:bg-gray-50 dark:hover:bg-gray-700' }} transition-colors">
                                 <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium
-                                    @if(($isEnrolled || $isTeacher) && auth()->user()->lessonProgress()->where('lesson_id', $courseLesson->id)->where('is_completed', true)->exists())
+                                    @if($isCompleted)
                                         bg-green-500 text-white
                                     @elseif($courseLesson->id === $lesson->id)
                                         bg-blue-500 text-white
+                                    @elseif(!$canAccess)
+                                        bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400
                                     @else
                                         bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-400
                                     @endif
                                 ">
-                                    @if(($isEnrolled || $isTeacher) && auth()->user()->lessonProgress()->where('lesson_id', $courseLesson->id)->where('is_completed', true)->exists())
+                                    @if($isCompleted)
                                         ✓
+                                    @elseif(!$canAccess)
+                                        🔒
                                     @else
                                         {{ $courseLesson->order }}
                                     @endif
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    @if($isEnrolled || $isTeacher || $courseLesson->is_free)
+                                    @if($canAccess)
                                         <a href="{{ route('lessons.show', [$course->slug, $courseLesson->slug]) }}" 
                                            class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block truncate">
                                             {{ $courseLesson->title }}
@@ -326,9 +343,12 @@
                                         @if($courseLesson->is_free)
                                             <span class="text-green-600 dark:text-green-400">Free</span>
                                         @endif
+                                        @if(!$canAccess && $isEnrolled)
+                                            <span class="text-orange-600 dark:text-orange-400">Locked</span>
+                                        @endif
                                     </div>
                                 </div>
-                                @if(!$isEnrolled && !$isTeacher && !$courseLesson->is_free)
+                                @if(!$canAccess)
                                     <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
                                     </svg>
@@ -382,81 +402,6 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    if ($('#player').length) {
-        const videoUrl = $('#player').data('plyr-embed-id');
-        const lessonId = $('#player').data('lesson-id');
-
-        // Use Plyr with encrypted or hidden video URL
-        const player = new Plyr('#player', {
-            controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
-            youtube: {
-                noCookie: true,
-                rel: 0,
-                showinfo: 0,
-                modestbranding: 1,
-                controls: 1 // Ensure Plyr controls override YouTube's
-            },
-            source: {
-                type: 'video',
-                sources: [{
-                    src: '/video-stream/' + lessonId, // Proxy endpoint to stream video
-                    provider: 'html5'
-                }]
-            }
-        });
-
-        // Remove these event handlers
-        /*
-        let lastTrackedTime = 0;
-
-        player.on('timeupdate', function(event) {
-            const currentTime = Math.floor(player.currentTime);
-            const duration = Math.floor(player.duration);
-            const audioEnabled = !player.muted && player.volume > 0;
-
-            if (currentTime - lastTrackedTime >= 5 && duration > 0) {
-                $.post('/lessons/' + lessonId + '/video-progress', {
-                    current_time: currentTime,a
-                    duration: duration,
-                    audio_enabled: audioEnabled,
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                }).done(function(response) {
-                    $('#lesson-warning').removeClass('hidden').text(response.message);
-                    if (response.video_completed) {
-                        $('#lesson-warning').addClass('hidden');
-                    }
-                    if (response.trigger_review) {
-                        setTimeout(() => {
-                            showReviewModal(response.course_id);
-                        }, 2000);
-                    }
-                }).fail(function(xhr) {
-                    toastr.error('Error tracking video progress. Please try again.');
-                });
-                lastTrackedTime = currentTime;
-            }
-        });
-
-        player.on('seeking', function(event) {
-            if (player.currentTime > lastTrackedTime + 10) {
-                player.currentTime = lastTrackedTime;
-            }
-        });
-        */
-
-        // Disable right-click to prevent context menu
-        $('#player').on('contextmenu', function(e) {
-            e.preventDefault();
-        });
-    }
-
-    // Initialize audio/video players
-    if ($('#lesson-audio').length) {
-        const audioPlayer = new Plyr('#lesson-audio');
-    }
-    if ($('#lesson-video').length) {
-        const videoPlayer = new Plyr('#lesson-video');
-    }
 
     // Discussion media handling
     let discussionMediaRecorder;
@@ -859,7 +804,7 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: '/courses/{{ $course->id }}/review',
+            url: '/courses/{{ $course->slug }}/review',
             method: 'POST',
             data: {
                 rating: rating,

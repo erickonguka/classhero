@@ -9,13 +9,16 @@ use App\Models\LessonMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Models\Quiz;
+use App\Models\QuizQuestion;
 
 class LessonController extends Controller
 {
     public function index(Course $course)
     {
-        $lessons = $course->lessons()->orderBy('order')->get();
+        $lessons = $course->lessons()->orderBy('order')->paginate(10);
         return view('teacher.lessons.index', compact('course', 'lessons'));
     }
 
@@ -87,7 +90,7 @@ class LessonController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Lesson created successfully!',
-            'redirect' => route('teacher.courses.show', $course->id)
+            'redirect' => route('teacher.courses.show', $course)
         ]);
     }
 
@@ -98,10 +101,22 @@ class LessonController extends Controller
 
     public function edit(Course $course, Lesson $lesson)
     {
-        return view('teacher.lessons.edit', compact('course', 'lesson'));
+        $existingMedia = $lesson->lessonMedia->map(function ($media) {
+            return [
+                'id'          => $media->id,
+                'type'        => $media->type,
+                'url'         => $media->url ?? ($media->file_path ? asset('storage/' . $media->file_path) : null),
+                'title'       => $media->title,
+                'description' => $media->description,
+                'order'       => $media->order,
+            ];
+        })->toArray();
+
+        return view('teacher.lessons.edit', compact('course', 'lesson', 'existingMedia'));
     }
 
-    public function update(Request $request, Course $course, Lesson $lesson)
+
+    public function update(Request $request, Lesson $lesson)
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
@@ -164,11 +179,11 @@ class LessonController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Lesson updated successfully!',
-            'redirect' => route('teacher.courses.show', $course->id)
+            'redirect' => route('teacher.courses.show', $lesson->course)
         ]);
     }
 
-    public function destroy(Course $course, Lesson $lesson)
+    public function destroy(Lesson $lesson)
     {
         // Delete associated media files
         if ($lesson->thumbnail) {
@@ -186,15 +201,15 @@ class LessonController extends Controller
         $lesson->delete();
 
         // Reorder remaining lessons
-        $course->lessons()->orderBy('order')->get()->each(function ($lesson, $index) {
-            $lesson->order = $index + 1;
-            $lesson->save();
+        $lesson->course->lessons()->orderBy('order')->get()->each(function ($remainingLesson, $index) {
+            $remainingLesson->order = $index + 1;
+            $remainingLesson->save();
         });
 
         return response()->json([
             'success' => true,
             'message' => 'Lesson deleted successfully!',
-            'redirect' => route('teacher.courses.show', $course->id)
+            'redirect' => route('teacher.courses.show', $lesson->course)
         ]);
     }
 
@@ -314,5 +329,84 @@ class LessonController extends Controller
         if ($extension === 'pdf') return 'pdf';
         if (in_array($extension, $docExts)) return 'document';
         return 'file';
+    }
+
+    public function createQuiz(Lesson $lesson)
+    {
+        if ($lesson->course->teacher_id !== Auth::id()) {
+            abort(403);
+        }
+
+        return view('teacher.quizzes.create', compact('lesson'));
+    }
+
+    public function storeQuiz(Request $request, Lesson $lesson)
+    {
+        if ($lesson->course->teacher_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'passing_score' => 'required|integer|min:1|max:100',
+            'max_attempts' => 'required|integer|min:1',
+            'time_limit' => 'nullable|integer|min:1',
+            'questions' => 'required|array|min:1',
+            'questions.*.question' => 'required|string',
+            'questions.*.type' => 'required|in:multiple_choice,true_false,fill_blank',
+            'questions.*.options' => 'nullable|array',
+            'questions.*.correct_answers' => 'required|array',
+            'questions.*.points' => 'required|integer|min:1|max:10',
+        ]);
+
+        $quiz = Quiz::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'lesson_id' => $lesson->id,
+            'passing_score' => $request->passing_score,
+            'max_attempts' => $request->max_attempts,
+            'time_limit' => $request->time_limit,
+            'is_required' => true,
+            'show_results' => true,
+        ]);
+
+        foreach ($request->questions as $index => $questionData) {
+            QuizQuestion::create([
+                'quiz_id' => $quiz->id,
+                'question' => $questionData['question'],
+                'type' => $questionData['type'],
+                'options' => $questionData['options'] ?? null,
+                'correct_answers' => $questionData['correct_answers'],
+                'explanation' => $questionData['explanation'] ?? null,
+                'points' => $questionData['points'],
+                'order' => $index + 1,
+            ]);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Quiz created successfully!',
+                'redirect_url' => route('teacher.lessons.show', $lesson)
+            ]);
+        }
+        
+        return redirect()->route('teacher.lessons.show', $lesson)
+            ->with('success', 'Quiz created successfully!');
+    }
+
+    public function comments(Lesson $lesson)
+    {
+        if ($lesson->course->teacher_id !== Auth::id()) {
+            abort(403);
+        }
+        
+        $discussions = $lesson->discussions()
+            ->with(['user', 'replies.user'])
+            ->latest()
+            ->paginate(10);
+            
+        return view('teacher.lessons.comments', compact('lesson', 'discussions'));
     }
 }

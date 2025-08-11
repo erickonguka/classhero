@@ -55,9 +55,73 @@ class CourseController extends Controller
         return back()->with('success', 'Course rejected with feedback sent to teacher.');
     }
 
+    public function updateStatus(Request $request, Course $course)
+    {
+        $request->validate([
+            'status' => 'required|in:draft,pending,published,rejected'
+        ]);
+        
+        $course->update(['status' => $request->status]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Course status updated successfully!'
+        ]);
+    }
+    
+    public function batchAction(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:publish,draft,pending,reject,delete',
+            'courses' => 'required|array',
+            'courses.*' => 'exists:courses,id'
+        ]);
+        
+        $courses = Course::whereIn('id', $request->courses)->get();
+        $count = 0;
+        
+        foreach ($courses as $course) {
+            switch ($request->action) {
+                case 'publish':
+                    $course->update(['status' => 'published']);
+                    $count++;
+                    break;
+                case 'draft':
+                    $course->update(['status' => 'draft']);
+                    $count++;
+                    break;
+                case 'pending':
+                    $course->update(['status' => 'pending']);
+                    $count++;
+                    break;
+                case 'reject':
+                    $course->update(['status' => 'rejected']);
+                    $count++;
+                    break;
+                case 'delete':
+                    $course->delete();
+                    $count++;
+                    break;
+            }
+        }
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully processed {$count} courses"
+        ]);
+    }
+    
     public function destroy(Course $course)
     {
         $course->delete();
+        
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Course deleted successfully!'
+            ]);
+        }
+        
         return redirect()->route('admin.courses.index')->with('success', 'Course deleted successfully!');
     }
 }

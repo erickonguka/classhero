@@ -5,6 +5,40 @@
 
 @section('content')
 <div class="p-6">
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <p class="text-gray-600 dark:text-gray-400">Track your course performance and student engagement</p>
+        <div class="flex gap-2">
+            <button onclick="exportData('pdf')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">
+                Export PDF
+            </button>
+            <button onclick="exportData('csv')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                Export CSV
+            </button>
+        </div>
+    </div>
+    
+    <!-- Filter Controls -->
+    <div class="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4">
+        <form method="GET" class="flex flex-wrap gap-3">
+            <select name="date_filter" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <option value="">All Time</option>
+                <option value="today" {{ request('date_filter') === 'today' ? 'selected' : '' }}>Today</option>
+                <option value="week" {{ request('date_filter') === 'week' ? 'selected' : '' }}>This Week</option>
+                <option value="month" {{ request('date_filter') === 'month' ? 'selected' : '' }}>This Month</option>
+                <option value="year" {{ request('date_filter') === 'year' ? 'selected' : '' }}>This Year</option>
+            </select>
+            <select name="sort" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <option value="created_at" {{ request('sort') === 'created_at' ? 'selected' : '' }}>Date Enrolled</option>
+                <option value="progress" {{ request('sort') === 'progress' ? 'selected' : '' }}>Progress</option>
+                <option value="name" {{ request('sort') === 'name' ? 'selected' : '' }}>Student Name</option>
+            </select>
+            <select name="direction" class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                <option value="desc" {{ request('direction') === 'desc' ? 'selected' : '' }}>Descending</option>
+                <option value="asc" {{ request('direction') === 'asc' ? 'selected' : '' }}>Ascending</option>
+            </select>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Apply</button>
+        </form>
+    </div>
 
     <!-- Overview Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -135,6 +169,12 @@
                                         <div class="ml-3">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $enrollment->user->name }}</div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">{{ $enrollment->user->email }}</div>
+                                            @if($enrollment->user->country_code)
+                                                <div class="text-xs text-gray-400 flex items-center mt-1">
+                                                    <span class="mr-1">{{ $enrollment->user->getCountryFlag() }}</span>
+                                                    {{ $enrollment->user->getCountryName() }}
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -217,5 +257,9 @@ const enrollmentChart = new Chart(ctx, {
         }
     }
 });
+
+function exportData(format) {
+    toastr.info(`${format.toUpperCase()} export functionality coming soon!`);
+}
 </script>
 @endsection

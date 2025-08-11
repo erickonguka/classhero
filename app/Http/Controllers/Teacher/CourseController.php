@@ -15,6 +15,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class CourseController extends Controller
 {
     use AuthorizesRequests;
+
     public function index(Request $request)
     {
         $query = Course::where('teacher_id', Auth::id())
@@ -50,7 +51,7 @@ class CourseController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'short_description' => 'required|string|max:500',
             'description' => 'required|string',
@@ -60,7 +61,12 @@ class CourseController extends Controller
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|integer|min:1',
             'what_you_learn' => 'nullable|array',
+            'what_you_learn.*' => 'string|max:500',
             'requirements' => 'nullable|array',
+            'requirements.*' => 'string|max:500',
+            'tags_input' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:50',
             'thumbnail' => 'nullable|image|max:2048',
         ]);
 
@@ -75,21 +81,30 @@ class CourseController extends Controller
             'category_id' => $request->category_id,
             'difficulty' => $request->difficulty,
             'status' => 'draft',
-            'is_free' => $request->is_free,
-            'price' => $request->is_free ? null : $request->price,
+            'is_free' => true, // All courses are free for now
+            'price' => null,
             'duration_hours' => $request->duration_hours,
-            'what_you_learn' => $request->what_you_learn ?? [],
-            'requirements' => $request->requirements ?? [],
+            'what_you_learn' => array_filter($request->what_you_learn ?? [], fn($item) => !empty(trim($item))),
+            'requirements' => array_filter($request->requirements ?? [], fn($item) => !empty(trim($item))),
+            'tags' => $request->tags_input ? array_filter(array_map('trim', explode(',', $request->tags_input)), fn($item) => !empty($item)) : [],
         ]);
 
         if ($request->hasFile('thumbnail')) {
             $course->addMediaFromRequest('thumbnail')
-                   ->toMediaCollection('thumbnails');
+                ->toMediaCollection('thumbnails');
         }
 
-        return redirect()->route('teacher.courses.show', $course)
-            ->with('success', 'Course created successfully!')
-            ->with('suggest_lessons', true);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Course created successfully! Now add some lessons to help students learn.',
+                'course' => $course->load('category'),
+                'redirect_url' => route('teacher.courses.lessons.create', $course),
+                'suggest_lessons' => true
+            ], 201);
+        }
+
+        return redirect()->route('teacher.courses.lessons.create', $course)
+            ->with('success', 'Course created successfully! Now add some lessons to help students learn.');
     }
 
     public function show(Course $course)
@@ -123,7 +138,7 @@ class CourseController extends Controller
     {
         $this->authorize('update', $course);
 
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'short_description' => 'required|string|max:500',
             'description' => 'required|string',
@@ -133,7 +148,12 @@ class CourseController extends Controller
             'price' => 'nullable|numeric|min:0',
             'duration_hours' => 'nullable|integer|min:1',
             'what_you_learn' => 'nullable|array',
+            'what_you_learn.*' => 'string|max:500',
             'requirements' => 'nullable|array',
+            'requirements.*' => 'string|max:500',
+            'tags_input' => 'nullable|string',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:50',
             'thumbnail' => 'nullable|image|max:2048',
         ]);
 
@@ -144,17 +164,18 @@ class CourseController extends Controller
             'description' => $request->description,
             'category_id' => $request->category_id,
             'difficulty' => $request->difficulty,
-            'is_free' => $request->is_free,
-            'price' => $request->is_free ? null : $request->price,
+            'is_free' => true, // All courses are free for now
+            'price' => null,
             'duration_hours' => $request->duration_hours,
-            'what_you_learn' => $request->what_you_learn ?? [],
-            'requirements' => $request->requirements ?? [],
+            'what_you_learn' => array_filter($request->what_you_learn ?? [], fn($item) => !empty(trim($item))),
+            'requirements' => array_filter($request->requirements ?? [], fn($item) => !empty(trim($item))),
+            'tags' => $request->tags_input ? array_filter(array_map('trim', explode(',', $request->tags_input)), fn($item) => !empty($item)) : [],
         ]);
 
         if ($request->hasFile('thumbnail')) {
             $course->clearMediaCollection('thumbnails');
             $course->addMediaFromRequest('thumbnail')
-                   ->toMediaCollection('thumbnails');
+                ->toMediaCollection('thumbnails');
         }
 
         // Recalculate progress for all enrolled students when course is updated
@@ -164,6 +185,14 @@ class CourseController extends Controller
             }
         });
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Course updated successfully!',
+                'course' => $course->fresh()->load('category'),
+                'redirect_url' => route('teacher.courses.show', $course),
+            ], 200);
+        }
+
         return redirect()->route('teacher.courses.show', $course)
             ->with('success', 'Course updated successfully! Student progress has been recalculated.');
     }
@@ -172,6 +201,13 @@ class CourseController extends Controller
     {
         $this->authorize('delete', $course);
         $course->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Course deleted successfully!'
+            ]);
+        }
 
         return redirect()->route('teacher.courses.index')
             ->with('success', 'Course deleted successfully!');
@@ -218,10 +254,18 @@ class CourseController extends Controller
         $this->authorize('update', $course);
         
         if (!$course->canBePublished()) {
+            if (request()->wantsJson()) {
+                return response()->json(['error' => 'Course must have at least 1 lesson to be published.'], 400);
+            }
             return back()->with('error', 'Course must have at least 1 lesson to be published.');
         }
         
         $course->update(['status' => 'pending']);
+        
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Course submitted for admin approval!']);
+        }
+        
         return back()->with('success', 'Course submitted for admin approval!');
     }
 

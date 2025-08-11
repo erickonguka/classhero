@@ -21,6 +21,27 @@ class LessonController extends Controller
                 ->with('error', 'You need to enroll in this course to access this lesson.');
         }
 
+        // Check lesson progression - students must complete previous lessons
+        if ($isEnrolled && !$isTeacher && $lesson->order > 1) {
+            $previousLesson = $course->lessons()
+                ->where('order', '<', $lesson->order)
+                ->where('is_published', true)
+                ->orderBy('order', 'desc')
+                ->first();
+            
+            if ($previousLesson) {
+                $previousProgress = LessonProgress::where('user_id', Auth::id())
+                    ->where('lesson_id', $previousLesson->id)
+                    ->where('is_completed', true)
+                    ->first();
+                
+                if (!$previousProgress) {
+                    return redirect()->route('lessons.show', [$course->slug, $previousLesson->slug])
+                        ->with('error', 'You must complete the previous lesson first.');
+                }
+            }
+        }
+
         $lesson->load(['course', 'quiz.questions']);
         
         // Get user's progress for this lesson

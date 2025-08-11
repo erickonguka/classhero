@@ -12,7 +12,7 @@
             </a>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6">
-            <form id="lesson-form" action="{{ route('teacher.lessons.update', [$course, $lesson]) }}" method="POST" enctype="multipart/form-data">
+            <form data-ajax data-success-message="Lesson updated successfully!" data-error-message="Failed to update lesson" id="lesson-form" action="{{ route('teacher.lessons.update', $lesson) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -31,7 +31,7 @@
                     <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Basic Information</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                         <div>
-                            <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lesson Title</label>
+                            <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lesson Title *</label>
                             <input type="text" id="title" name="title" value="{{ old('title', $lesson->title) }}" required
                                    class="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                    placeholder="Enter lesson title">
@@ -50,7 +50,7 @@
                         </div>
                     </div>
                     <div class="mb-4 sm:mb-6">
-                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description *</label>
                         <textarea id="description" name="description" rows="4" required
                                   class="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                   placeholder="Describe what this lesson covers">{{ old('description', $lesson->description) }}</textarea>
@@ -187,10 +187,9 @@
                     </div>
                     <div class="flex justify-between mt-4">
                         <button type="button" data-prev="media" class="prev-step px-4 sm:px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm">Back</button>
-                        <button type="submit" id="submit-btn" class="px-4 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs sm:text-sm flex items-center">
-                            <span id="submit-text">Update Lesson</span>
-                            <svg id="submit-spinner" class="w-5 h-5 ml-2 animate-spin hidden" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        </button>
+                        <x-spinning-button type="submit" id="submit-btn">
+                            Update Lesson
+                        </x-spinning-button>
                     </div>
                 </div>
 
@@ -256,6 +255,7 @@
 @push('scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{{ asset('js/forms.js') }}"></script>
 <script>
 toastr.options = {
     closeButton: true,
@@ -334,9 +334,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let attachedMedia = [];
 
     // Load existing media from lesson
-    const existingMedia = @json($lesson->media_data ?? []);
-    existingMedia.forEach((media, index) => {
-        addMediaItem(null, media.type, media.url || null, media.title || '', media.description || '', media.id || null);
+    const existingMedia = @json($existingMedia);
+    existingMedia.forEach((media) => {
+        addMediaItem(
+            null,
+            media.type,
+            media.url || null,
+            media.title || '',
+            media.description || '',
+            media.id || null
+        );
     });
 
     function getMediaType(file) {
@@ -778,41 +785,52 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // AJAX Form Submission
-    document.getElementById('lesson-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (!validateStep('basic') || !validateStep('content')) {
-            toastr.error('Please complete all required fields');
-            return;
-        }
+document.getElementById('lesson-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Validate form steps
+    if (!validateStep('basic') || !validateStep('content')) {
+        toastr.error('Please complete all required fields');
+        return;
+    }
 
-        Swal.fire({
-            title: 'Update Lesson?',
-            text: 'Are you sure you want to update this lesson?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, update it!',
-            cancelButtonText: 'No, cancel',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const form = e.target;
-                const formData = new FormData(form);
-                const submitBtn = document.getElementById('submit-btn');
-                const submitText = document.getElementById('submit-text');
-                const submitSpinner = document.getElementById('submit-spinner');
+    Swal.fire({
+        title: 'Update Lesson?',
+        text: 'Are you sure you want to update this lesson?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, update it!',
+        cancelButtonText: 'No, cancel',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = e.target;
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const submitSpinner = document.getElementById('submit-spinner');
 
-                submitBtn.disabled = true;
-                submitText.textContent = 'Processing...';
-                submitSpinner.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitText.textContent = 'Processing...';
+            submitSpinner.classList.remove('hidden');
 
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
+            console.log('Form Action URL:', form.action); // Debug URL
+
+            fetch(form.action, {
+                method: 'POST', // Using POST with _method=PUT
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                }
+            })
+            .then(response => {
+                console.log('Response Status:', response.status);
+                console.log('Response Headers:', response.headers.get('content-type'));
+                return response.text(); // Get raw response for debugging
+            })
+            .then(text => {
+                console.log('Raw Response:', text);
+                try {
+                    const data = JSON.parse(text);
                     submitBtn.disabled = false;
                     submitText.textContent = 'Update Lesson';
                     submitSpinner.classList.add('hidden');
@@ -830,17 +848,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         toastr.error(data.message || 'An error occurred while updating the lesson.');
                     }
-                })
-                .catch(error => {
+                } catch (e) {
+                    console.error('JSON Parse Error:', e);
+                    toastr.error('Invalid server response. Please check the console.');
                     submitBtn.disabled = false;
                     submitText.textContent = 'Update Lesson';
                     submitSpinner.classList.add('hidden');
-                    toastr.error('An error occurred. Please try again.');
-                    console.error('Error:', error);
-                });
-            }
-        });
+                }
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                toastr.error('An error occurred. Please try again.');
+                submitBtn.disabled = false;
+                submitText.textContent = 'Update Lesson';
+                submitSpinner.classList.add('hidden');
+            });
+        }
     });
+});
 });
 </script>
 @endpush

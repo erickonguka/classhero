@@ -13,7 +13,7 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form data-ajax data-success-message="Profile updated successfully!" data-error-message="Failed to update profile" method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
         @csrf
         @method('patch')
 
@@ -48,7 +48,7 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <x-primary-button>{{ __('Save') }}</x-primary-button>
+            <x-spinning-button type="submit">{{ __('Save') }}</x-spinning-button>
 
             @if (session('status') === 'profile-updated')
                 <p

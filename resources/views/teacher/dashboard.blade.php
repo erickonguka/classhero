@@ -8,6 +8,64 @@
     <div class="mb-6">
         <p class="text-gray-600 dark:text-gray-400">Manage your courses and track student progress</p>
     </div>
+    
+    @if(auth()->user()->courses()->count() == 0)
+        <!-- New Teacher Suggestion -->
+        <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-xl p-6 mb-8">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">Welcome to ClassHero!</h3>
+                    <p class="text-blue-700 dark:text-blue-300 mb-4">Get started by creating your first course. Share your knowledge and help students learn something new!</p>
+                    <a href="{{ route('teacher.courses.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Create Your First Course
+                    </a>
+                </div>
+            </div>
+        </div>
+    @elseif(auth()->user()->courses()->whereDoesntHave('lessons')->count() > 0)
+        <!-- Course without lessons suggestion -->
+        @php $courseWithoutLessons = auth()->user()->courses()->whereDoesntHave('lessons')->first(); @endphp
+        <div class="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-xl p-6 mb-8">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">Add Lessons to Your Course</h3>
+                    <p class="text-yellow-700 dark:text-yellow-300 mb-4">Your course "{{ $courseWithoutLessons->title }}" needs lessons! Add video, text, or audio content to help students learn.</p>
+                    <a href="{{ route('teacher.courses.lessons.create', $courseWithoutLessons) }}" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Add Lessons
+                    </a>
+                </div>
+            </div>
+        </div>
+    @elseif(auth()->user()->courses()->whereHas('lessons', function($q) { $q->whereDoesntHave('quiz'); })->count() > 0)
+        <!-- Lessons without quizzes suggestion -->
+        @php $lessonWithoutQuiz = auth()->user()->courses()->whereHas('lessons', function($q) { $q->whereDoesntHave('quiz'); })->with('lessons')->first()->lessons->whereNull('quiz_id')->first(); @endphp
+        <div class="bg-purple-50 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 rounded-xl p-6 mb-8">
+            <div class="flex items-start space-x-4">
+                <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-purple-800 dark:text-purple-200 mb-2">Add Quizzes to Test Knowledge</h3>
+                    <p class="text-purple-700 dark:text-purple-300 mb-4">Enhance learning by adding quizzes to your lessons. Help students test their understanding!</p>
+                    <a href="{{ route('teacher.lessons.quiz.create', $lessonWithoutQuiz) }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Create Quiz
+                    </a>
+                </div>
+            </div>
+        </div>
+    @endif
 
         <!-- Quick Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -134,7 +192,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('teacher.payments.index') }}" class="flex items-center p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-800 transition-colors">
+                <div class="flex items-center p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg opacity-60">
                     <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center mr-4">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
@@ -142,9 +200,9 @@
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-900 dark:text-white">View Payments</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Track earnings and withdrawals</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Coming Soon</p>
                     </div>
-                </a>
+                </div>
             </div>
         </div>
 

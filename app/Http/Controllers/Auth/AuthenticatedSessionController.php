@@ -25,11 +25,20 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
 
-        // Redirect based on user role
         $user = Auth::user();
+        
+        // Check if user needs MFA
+        if ($user->isAdmin() && $user->two_factor_secret) {
+            return redirect()->route('mfa.show');
+        } elseif ($user->isTeacher()) {
+            return redirect()->route('mfa.show');
+        } elseif ($user->isLearner() && !$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        // Direct login for users without MFA requirements
         if ($user->isTeacher()) {
             return redirect()->intended(route('teacher.dashboard'));
         } elseif ($user->isAdmin()) {

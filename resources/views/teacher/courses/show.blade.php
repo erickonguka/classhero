@@ -30,9 +30,32 @@
     </div>
     @endif
     <!-- Course Header with Thumbnail -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8 relative">
         @if($course->getFirstMediaUrl('thumbnails'))
-            <div class="h-64 bg-cover bg-center" style="background-image: url('{{ $course->getFirstMediaUrl('thumbnails') }}')">
+            <div class="h-64 bg-cover bg-center relative" style="background-image: url('{{ $course->getFirstMediaUrl('thumbnails') }}')">
+                <!-- Status Badge -->
+                <div class="absolute top-4 right-4">
+                    @if($course->status === 'published')
+                        <div class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Approved
+                        </div>
+                    @elseif($course->status === 'pending')
+                        <div class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                            Under Review
+                        </div>
+                    @elseif($course->status === 'draft' && $course->canBePublished())
+                        <button onclick="confirmPublish('{{ $course->slug }}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                            Submit for Review
+                        </button>
+                    @elseif($course->status === 'draft')
+                        <div class="bg-gray-400 text-white px-3 py-1 rounded-full text-sm font-medium cursor-not-allowed" title="Add at least 1 lesson to publish">
+                            Draft
+                        </div>
+                    @endif
+                </div>
                 <div class="h-full bg-black bg-opacity-40 flex items-end">
                     <div class="p-6 text-white">
                         <h1 class="text-3xl font-bold mb-2">{{ $course->title }}</h1>
@@ -41,7 +64,30 @@
                 </div>
             </div>
         @else
-            <div class="h-64 bg-gradient-to-r from-blue-500 to-purple-600 flex items-end">
+            <div class="h-64 bg-gradient-to-r from-blue-500 to-purple-600 flex items-end relative">
+                <!-- Status Badge -->
+                <div class="absolute top-4 right-4">
+                    @if($course->status === 'published')
+                        <div class="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Approved
+                        </div>
+                    @elseif($course->status === 'pending')
+                        <div class="bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                            Under Review
+                        </div>
+                    @elseif($course->status === 'draft' && $course->canBePublished())
+                        <button onclick="confirmPublish('{{ $course->slug }}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium transition-colors">
+                            Submit for Review
+                        </button>
+                    @elseif($course->status === 'draft')
+                        <div class="bg-gray-400 text-white px-3 py-1 rounded-full text-sm font-medium cursor-not-allowed" title="Add at least 1 lesson to publish">
+                            Draft
+                        </div>
+                    @endif
+                </div>
                 <div class="p-6 text-white">
                     <h1 class="text-3xl font-bold mb-2">{{ $course->title }}</h1>
                     <p class="text-gray-200">{{ $course->short_description }}</p>
@@ -50,33 +96,21 @@
         @endif
         
         <div class="p-6">
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 mb-4">
-                <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
-                    Preview
+            <div class="flex flex-wrap gap-2 mb-4">
+                <a href="{{ route('courses.show', $course->slug) }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Preview Course
                 </a>
-                <a href="{{ route('teacher.courses.edit', $course) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
-                    Edit
+                <a href="{{ route('teacher.courses.edit', $course) }}" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Edit Details
                 </a>
-                <a href="{{ route('teacher.courses.lessons.index', $course) }}" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
-                    Lessons
+                <a href="{{ route('teacher.courses.lessons.index', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    View Lessons ({{ $course->lessons->count() }})
                 </a>
-                <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
-                    Add Lesson
-                </a>
-                @if($course->status === 'draft' && $course->canBePublished())
-                    <button onclick="confirmPublish({{ $course->id }})" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
-                        Submit
-                    </button>
-                @elseif($course->status === 'draft')
-                    <button disabled class="bg-gray-400 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium cursor-not-allowed text-center" title="Add at least 1 lesson to publish">
-                        Submit
-                    </button>
-                @endif
-                <a href="{{ route('teacher.courses.students', $course) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center">
+                <a href="{{ route('teacher.courses.students', $course) }}" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                     Students ({{ $course->enrollments->count() }})
                 </a>
-                <a href="{{ route('teacher.courses.payments', $course) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded text-xs sm:text-sm font-medium transition-colors text-center col-span-2 sm:col-span-1">
-                    Payments
+                <a href="{{ route('teacher.courses.comments', $course) }}" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                    Comments
                 </a>
             </div>
             
@@ -153,6 +187,9 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Course Lessons</h2>
             <div class="flex space-x-2">
+                <a href="{{ route('teacher.courses.lessons.index', $course) }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    View Lessons
+                </a>
                 <a href="{{ route('teacher.courses.lessons.create', $course) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                     Add New Lesson
                 </a>
@@ -172,6 +209,14 @@
                                     <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ ucfirst($lesson->type) }}</span>
                                     @if($lesson->duration_minutes)
                                         <span class="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{{ $lesson->duration_minutes }}m</span>
+                                    @endif
+                                    @if($lesson->lessonMedia->count() > 0)
+                                        @php
+                                            $mediaTypes = $lesson->lessonMedia->pluck('type')->unique();
+                                        @endphp
+                                        @foreach($mediaTypes as $mediaType)
+                                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded">{{ ucfirst($mediaType) }}</span>
+                                        @endforeach
                                     @endif
                                     @if($lesson->quiz)
                                         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Has Quiz</span>
@@ -194,7 +239,7 @@
                                         Edit Quiz
                                     </a>
                                 @endif
-                                <button onclick="confirmDeleteLesson({{ $lesson->id }}, '{{ addslashes($lesson->title) }}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors">
+                                <button onclick="confirmDeleteLesson('{{ $lesson->slug }}', '{{ addslashes($lesson->title) }}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors">
                                     Delete
                                 </button>
                             </div>
@@ -290,11 +335,10 @@
         @endif
     </div>
 
-
 </div>
 
 <script>
-function confirmPublish(courseId) {
+function confirmPublish(courseSlug) {
     Swal.fire({
         title: 'Submit Course for Review',
         text: 'Are you sure you want to submit this course for admin review? Once submitted, you won\'t be able to edit it until it\'s reviewed.',
@@ -306,27 +350,46 @@ function confirmPublish(courseId) {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            submitPublish(courseId);
+            submitPublish(courseSlug);
         }
     });
 }
 
-function submitPublish(courseId) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/teacher/courses/${courseId}/publish`;
-    
-    const csrfToken = document.createElement('input');
-    csrfToken.type = 'hidden';
-    csrfToken.name = '_token';
-    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    form.appendChild(csrfToken);
-    document.body.appendChild(form);
-    form.submit();
+function submitPublish(courseSlug) {
+    fetch(`/teacher/courses/${courseSlug}/publish`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success || data.message) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message || 'Course submitted for review successfully!',
+                icon: 'success',
+                confirmButtonColor: '#10b981'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.error || 'Something went wrong');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to submit course for review',
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    });
 }
 
-function confirmDeleteLesson(lessonId, lessonTitle) {
+function confirmDeleteLesson(lessonSlug, lessonTitle) {
     Swal.fire({
         title: 'Delete Lesson',
         text: `Are you sure you want to delete "${lessonTitle}"? This action cannot be undone.`,
@@ -338,30 +401,43 @@ function confirmDeleteLesson(lessonId, lessonTitle) {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            deleteLesson(lessonId);
+            deleteLesson(lessonSlug);
         }
     });
 }
 
-function deleteLesson(lessonId) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/teacher/lessons/${lessonId}`;
-    
-    const csrfToken = document.createElement('input');
-    csrfToken.type = 'hidden';
-    csrfToken.name = '_token';
-    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    const methodField = document.createElement('input');
-    methodField.type = 'hidden';
-    methodField.name = '_method';
-    methodField.value = 'DELETE';
-    
-    form.appendChild(csrfToken);
-    form.appendChild(methodField);
-    document.body.appendChild(form);
-    form.submit();
+function deleteLesson(lessonSlug) {
+    fetch(`/teacher/lessons/${lessonSlug}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: 'Deleted!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#10b981'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message || 'Failed to delete lesson');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message,
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    });
 }
 
 function closeModal() {

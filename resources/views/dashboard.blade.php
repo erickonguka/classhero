@@ -3,6 +3,21 @@
 @section('title', 'Dashboard')
 
 @section('content')
+@if(request('verified') && request('success'))
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    Swal.fire({
+        icon: 'success',
+        title: 'Email Verified! 🎉',
+        text: 'Your email has been successfully verified. Welcome to ClassHero!',
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Start Learning!',
+        timer: 5000,
+        timerProgressBar: true
+    });
+});
+</script>
+@endif
 <!-- Page Loader -->
 <div id="page-loader" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
     <div class="text-center">

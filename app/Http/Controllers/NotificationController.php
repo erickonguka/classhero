@@ -3,40 +3,64 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Notifications\DatabaseNotification;
 
 class NotificationController extends Controller
 {
+    public function index()
+    {
+        $notifications = auth()->user()->notifications()->paginate(20);
+        return view('notifications.index', compact('notifications'));
+    }
+
+    public function show($id)
+    {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+        
+        // Mark as read when viewed
+        if (!$notification->read_at) {
+            $notification->markAsRead();
+        }
+        
+        return view('notifications.show', compact('notification'));
+    }
+
     public function markAsRead($id)
     {
-        $notification = Auth::user()->notifications()->findOrFail($id);
+        $notification = auth()->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
         
-        // Redirect to the relevant page based on notification type
-        $data = json_decode($notification->data, true);
-        
-        switch ($notification->type) {
-            case 'certificate_approved':
-                return redirect()->route('certificate.show', $data['certificate_id']);
-            case 'reply':
-            case 'comment':
-                $course = \App\Models\Course::find($data['course_id']);
-                $lesson = \App\Models\Lesson::find($data['lesson_id']);
-                if ($course && $lesson) {
-                    return redirect()->route('lessons.show', [$course->slug, $lesson->slug]);
-                }
-                return redirect()->route('progress.index');
-            case 'course_completion':
-                return redirect()->route('teacher.certifications.index');
-            default:
-                return redirect()->route('dashboard');
-        }
+        return response()->json(['success' => true]);
     }
-    
+
     public function markAllAsRead()
     {
-        Auth::user()->notifications()->whereNull('read_at')->update(['read_at' => now()]);
+        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
         
-        return response()->json(['success' => true, 'message' => 'All notifications marked as read']);
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications marked as read'
+        ]);
+    }
+
+    public function clearAll()
+    {
+        auth()->user()->notifications()->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'All notifications cleared'
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $notification = auth()->user()->notifications()->findOrFail($id);
+        $notification->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification deleted'
+        ]);
     }
 }

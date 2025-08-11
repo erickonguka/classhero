@@ -6,7 +6,7 @@
 @section('content')
 <div class="p-6">
     <div class="max-w-4xl mx-auto">
-        <form method="POST" action="{{ route('teacher.quizzes.update', $quiz) }}">
+        <form method="POST" action="{{ route('teacher.quizzes.update', $quiz) }}" data-ajax="true">
             @csrf
             @method('PUT')
             
@@ -74,7 +74,7 @@
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Points</label>
-                                    <input type="number" name="questions[{{ $index }}][points]" value="{{ $question->points }}" min="1" required
+                                    <input type="number" name="questions[{{ $index }}][points]" value="{{ $question->points }}" min="1" max="10" required
                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
                                 </div>
                             </div>
@@ -130,16 +130,44 @@
                 <a href="{{ route('teacher.quizzes.show', $quiz) }}" class="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
                     Cancel
                 </a>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
+                <x-spinning-button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium">
                     Update Quiz
-                </button>
+                </x-spinning-button>
             </div>
         </form>
     </div>
 </div>
 
+<script src="{{ asset('js/forms.js') }}"></script>
 <script>
 let questionIndex = {{ $quiz->questions->count() }};
+
+// Form validation before submit
+$('form[data-ajax]').on('submit', function(e) {
+    let hasError = false;
+    
+    // Check multiple choice questions have at least one correct answer
+    $('.question-item').each(function() {
+        const questionType = $(this).find('.question-type').val();
+        if (questionType === 'multiple_choice') {
+            const correctAnswers = $(this).find('input[name*="[correct_answers]"]').filter(':checked');
+            if (correctAnswers.length === 0) {
+                hasError = true;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Error',
+                    text: 'Each multiple choice question must have at least one correct answer selected.'
+                });
+                return false;
+            }
+        }
+    });
+    
+    if (hasError) {
+        e.preventDefault();
+        return false;
+    }
+});
 
 $(document).ready(function() {
     // Initialize existing questions
@@ -276,7 +304,7 @@ function addNewQuestion() {
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Points</label>
-                    <input type="number" name="questions[${questionIndex}][points]" value="10" min="1" required
+                    <input type="number" name="questions[${questionIndex}][points]" value="10" min="1" max="10" required
                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
                 </div>
             </div>

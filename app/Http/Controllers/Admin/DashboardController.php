@@ -18,20 +18,38 @@ class DashboardController extends Controller
             'total_users' => User::count(),
             'total_teachers' => User::where('role', 'teacher')->count(),
             'total_learners' => User::where('role', 'learner')->count(),
+            'total_admins' => User::where('role', 'admin')->count(),
             'total_courses' => Course::count(),
             'published_courses' => Course::where('status', 'published')->count(),
+            'pending_courses' => Course::where('status', 'pending')->count(),
             'total_enrollments' => Enrollment::count(),
             'total_revenue' => Payment::where('status', 'completed')->sum('amount'),
             'monthly_revenue' => Payment::where('status', 'completed')
                 ->whereMonth('created_at', now()->month)
                 ->sum('amount'),
+            'online_users' => User::whereNotNull('last_seen')->where('last_seen', '>=', now()->subMinutes(5))->count(),
+            'storage_used' => $this->getStorageUsed(),
         ];
 
         $recentUsers = User::latest()->take(5)->get();
         $recentCourses = Course::with('teacher')->latest()->take(5)->get();
         $topCourses = Course::orderBy('enrolled_count', 'desc')->take(5)->get();
 
-        return view('admin.dashboard', compact('stats', 'recentUsers', 'recentCourses', 'topCourses'));
+        // Monthly data for charts
+        $monthlyUsers = [];
+        $monthlyRevenue = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $monthlyUsers[] = User::whereYear('created_at', $date->year)
+                                ->whereMonth('created_at', $date->month)
+                                ->count();
+            $monthlyRevenue[] = Payment::where('status', 'completed')
+                                     ->whereYear('created_at', $date->year)
+                                     ->whereMonth('created_at', $date->month)
+                                     ->sum('amount');
+        }
+
+        return view('admin.dashboard', compact('stats', 'recentUsers', 'recentCourses', 'topCourses', 'monthlyUsers', 'monthlyRevenue'));
     }
 
     public function users()
@@ -110,5 +128,22 @@ class DashboardController extends Controller
             'topCourses',
             'recentEnrollments'
         ));
+    }
+
+    private function getStorageUsed()
+    {
+        $path = storage_path('app/public');
+        if (!is_dir($path)) return 0;
+        
+        $size = 0;
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS)
+        );
+        
+        foreach ($iterator as $file) {
+            $size += $file->getSize();
+        }
+        
+        return round($size / (1024 * 1024), 2); // MB
     }
 }

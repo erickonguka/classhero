@@ -109,7 +109,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Edit Profile</h1>
         
-        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form data-ajax data-success-message="Profile updated successfully!" data-error-message="Failed to update profile" action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
             
@@ -172,9 +172,9 @@
                 <a href="{{ route('profile.show') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors">
                     Cancel
                 </a>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                <x-spinning-button type="submit">
                     Update Profile
-                </button>
+                </x-spinning-button>
             </div>
         </form>
     </div>
@@ -333,4 +333,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<script src="{{ asset('js/forms.js') }}"></script>
 @endsection

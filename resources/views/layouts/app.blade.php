@@ -55,8 +55,15 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <!-- CSRF Handler (must be loaded first) -->
+    <script src="{{ asset('js/csrf-handler.js') }}"></script>
+    
+    <!-- Global AJAX Utils -->
+    <script src="{{ asset('js/global-ajax.js') }}"></script>
+    
     <!-- Custom Styles -->
     <style>
+        [x-cloak] { display: none !important; }
         .glass-effect {
             backdrop-filter: blur(10px);
             background: rgba(255, 255, 255, 0.1);
@@ -140,43 +147,60 @@
                                     @endif
                                 </button>
                                 
-                                <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                                <div x-show="open" @click.away="open = false" x-transition x-cloak class="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-w-screen-sm">
                                     <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                                        @if(auth()->user()->unreadNotifications()->count() > 0)
-                                            <button onclick="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
-                                                Mark all read
-                                            </button>
-                                        @endif
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                                        <div class="flex space-x-2">
+                                            @if(auth()->user()->unreadNotifications()->count() > 0)
+                                                <button onclick="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+                                                    Mark all read
+                                                </button>
+                                            @endif
+                                            @if(auth()->user()->notifications()->count() > 0)
+                                                <button onclick="clearAllNotifications()" class="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 font-medium">
+                                                    Clear all
+                                                </button>
+                                            @endif
+                                        </div>
                                     </div>
-                                    <div class="max-h-96 overflow-y-auto">
+                                    <div class="max-h-64 overflow-y-auto">
                                         @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
-                                            <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $notification->read_at ? 'opacity-75' : 'bg-blue-50 dark:bg-blue-900' }}">
+                                            <a href="{{ route('notifications.show', $notification->id) }}" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $notification->read_at ? '' : 'bg-blue-50 dark:bg-blue-900' }}">
                                                 <div class="flex items-start space-x-3">
                                                     <div class="flex-shrink-0">
                                                         @if($notification->type === 'certificate_approved')
-                                                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                                                <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                            <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                                                <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                                                                 </svg>
                                                             </div>
                                                         @elseif($notification->type === 'reply')
-                                                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                            <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path>
                                                                 </svg>
                                                             </div>
                                                         @else
-                                                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                                                <svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                                            <div class="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                                                                <svg class="w-4 h-4 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.894A1 1 0 0018 16V3z" clip-rule="evenodd"></path>
                                                                 </svg>
                                                             </div>
                                                         @endif
                                                     </div>
                                                     <div class="flex-1 min-w-0">
-                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $notification->title }}</p>
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ Str::limit($notification->message, 60) }}</p>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            @php
+                                                $data = is_string($notification->data) ? json_decode($notification->data, true) : $notification->data;
+                                            @endphp
+                                            {{ $data['title'] ?? $notification->data['title'] ?? 'Notification' }}
+                                        </p>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            @php
+                                                $data = is_string($notification->data) ? json_decode($notification->data, true) : $notification->data;
+                                            @endphp
+                                            {{ Str::limit($data['message'] ?? $data['body'] ?? $notification->data['message'] ?? $notification->data['body'] ?? 'New notification', 60) }}
+                                        </p>
                                                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
                                                     </div>
                                                 </div>
@@ -438,6 +462,33 @@
                 }
             }).fail(function() {
                 toastr.error('Error marking notifications as read');
+            });
+        };
+        
+        // Clear all notifications with SweetAlert
+        window.clearAllNotifications = function() {
+            Swal.fire({
+                title: 'Clear All Notifications?',
+                text: 'This will permanently delete all your notifications.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, clear all!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.post('{{ route("notifications.clear-all") }}', {
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    }, function(response) {
+                        if (response.success) {
+                            Swal.fire('Cleared!', 'All notifications have been cleared.', 'success');
+                            location.reload();
+                        }
+                    }).fail(function() {
+                        Swal.fire('Error!', 'Failed to clear notifications.', 'error');
+                    });
+                }
             });
         };
         

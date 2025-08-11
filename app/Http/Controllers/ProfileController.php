@@ -37,6 +37,14 @@ class ProfileController extends Controller
                 ->toMediaCollection('profile_pictures');
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully!',
+                'redirect_url' => route('profile.show')
+            ]);
+        }
+        
         return redirect()->route('profile.show')->with('success', 'Profile updated successfully!');
     }
 

@@ -76,6 +76,32 @@ class CertificationController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Check if learner is qualified for certification
+        if ($enrollment->progress_percentage < 100) {
+            return response()->json(['error' => 'Student has not completed the course (Progress: ' . $enrollment->progress_percentage . '%)'], 400);
+        }
+
+        // Check if all required quizzes are passed
+        $course = $enrollment->course;
+        $failedQuizzes = [];
+        
+        foreach ($course->lessons as $lesson) {
+            if ($lesson->quiz) {
+                $bestAttempt = $lesson->quiz->attempts()
+                    ->where('user_id', $enrollment->user_id)
+                    ->orderBy('score', 'desc')
+                    ->first();
+                    
+                if (!$bestAttempt || $bestAttempt->score < $lesson->quiz->passing_score) {
+                    $failedQuizzes[] = $lesson->title;
+                }
+            }
+        }
+        
+        if (!empty($failedQuizzes)) {
+            return response()->json(['error' => 'Student has not passed required quizzes: ' . implode(', ', $failedQuizzes)], 400);
+        }
+
         $enrollment->update(['completed_at' => now()]);
 
         // Generate certificate
@@ -127,5 +153,15 @@ class CertificationController extends Controller
             'success' => true,
             'message' => 'Certification rejected. Student will need to complete requirements again.'
         ]);
+    }
+    
+    public function viewCertificate(Certificate $certificate)
+    {
+        // Check if teacher owns the course for this certificate
+        if ($certificate->course->teacher_id !== Auth::id()) {
+            abort(403, 'Unauthorized access to certificate');
+        }
+        
+        return view('certificate.show', compact('certificate'));
     }
 }

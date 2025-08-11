@@ -71,9 +71,77 @@
                     </div>
                 @endif
 
+                <!-- Lesson Media Items -->
+                @if($lesson->lessonMedia->count() > 0)
+                    <div class="space-y-4 mb-6">
+                        @foreach($lesson->lessonMedia as $media)
+                            <div class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                                @if($media->title || $media->description)
+                                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                                        @if($media->title)
+                                            <h4 class="font-medium text-gray-900 dark:text-white">{{ $media->title }}</h4>
+                                        @endif
+                                        @if($media->description)
+                                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ $media->description }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+                                
+                                <div class="p-4">
+                                    @if($media->type === 'youtube')
+                                        <div class="aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                                            <iframe src="{{ str_replace('watch?v=', 'embed/', $media->url) }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                                        </div>
+                                    @elseif($media->type === 'video')
+                                        <div class="aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                                            <video class="w-full h-full" controls>
+                                                <source src="{{ asset('storage/' . $media->file_path) }}" type="video/mp4">
+                                            </video>
+                                        </div>
+                                    @elseif($media->type === 'audio')
+                                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-6">
+                                            <audio class="w-full" controls>
+                                                <source src="{{ asset('storage/' . $media->file_path) }}" type="audio/mpeg">
+                                            </audio>
+                                        </div>
+                                    @elseif($media->type === 'image')
+                                        <div class="text-center">
+                                            <img src="{{ asset('storage/' . $media->file_path) }}" alt="{{ $media->title }}" class="max-w-full h-auto rounded-lg shadow-lg mx-auto">
+                                        </div>
+                                    @elseif($media->type === 'pdf')
+                                        <div class="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                                            <iframe src="{{ asset('storage/' . $media->file_path) }}#toolbar=1" width="100%" height="600px"></iframe>
+                                        </div>
+                                    @elseif($media->type === 'document')
+                                        <div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-6 text-center">
+                                            <svg class="w-16 h-16 mx-auto mb-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <p class="text-lg font-medium text-blue-800 dark:text-blue-200 mb-2">{{ $media->title ?: 'Document' }}</p>
+                                            <a href="{{ asset('storage/' . $media->file_path) }}" download class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors inline-block">
+                                                Download
+                                            </a>
+                                        </div>
+                                    @elseif($media->type === 'link')
+                                        <div class="bg-gradient-to-r from-green-500 to-blue-600 rounded-lg p-6 text-center text-white">
+                                            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                            </svg>
+                                            <p class="text-lg font-medium mb-4">{{ $media->title ?: 'External Resource' }}</p>
+                                            <a href="{{ $media->url }}" target="_blank" class="bg-white text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors inline-block">
+                                                Open Link
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
                 @if($lesson->content)
                     <div class="prose dark:prose-invert max-w-none">
-                        {!! nl2br(e($lesson->content)) !!}
+                        {!! $lesson->content !!}
                     </div>
                 @endif
             </div>
@@ -188,7 +256,7 @@
                             Edit Quiz
                         </a>
                     @endif
-                    <button onclick="confirmDeleteLesson({{ $lesson->id }}, '{{ addslashes($lesson->title) }}')" class="block w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors">
+                    <button onclick="confirmDeleteLesson('{{ $lesson->slug }}', '{{ addslashes($lesson->title) }}')" class="block w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg text-center font-medium transition-colors">
                         Delete Lesson
                     </button>
                 </div>
@@ -243,7 +311,7 @@
 </div>
 
 <script>
-function confirmDeleteLesson(lessonId, lessonTitle) {
+function confirmDeleteLesson(lessonSlug, lessonTitle) {
     Swal.fire({
         title: 'Delete Lesson',
         text: `Are you sure you want to delete "${lessonTitle}"? This action cannot be undone.`,
@@ -255,30 +323,43 @@ function confirmDeleteLesson(lessonId, lessonTitle) {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            deleteLesson(lessonId);
+            deleteLesson(lessonSlug);
         }
     });
 }
 
-function deleteLesson(lessonId) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = `/teacher/lessons/${lessonId}`;
-    
-    const csrfToken = document.createElement('input');
-    csrfToken.type = 'hidden';
-    csrfToken.name = '_token';
-    csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-    const methodField = document.createElement('input');
-    methodField.type = 'hidden';
-    methodField.name = '_method';
-    methodField.value = 'DELETE';
-    
-    form.appendChild(csrfToken);
-    form.appendChild(methodField);
-    document.body.appendChild(form);
-    form.submit();
+function deleteLesson(lessonSlug) {
+    fetch(`/teacher/lessons/${lessonSlug}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: 'Deleted!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#10b981'
+            }).then(() => {
+                window.location.href = data.redirect;
+            });
+        } else {
+            throw new Error(data.message || 'Failed to delete lesson');
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message,
+            icon: 'error',
+            confirmButtonColor: '#dc2626'
+        });
+    });
 }
 </script>
 @endsection

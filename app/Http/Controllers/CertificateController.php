@@ -60,20 +60,24 @@ class CertificateController extends Controller
             abort(403);
         }
 
-        $certificate->load(['user', 'course']);
-        
+        $certificate->load(['user', 'course.teacher', 'course.lessons']);
+
         $pdf = \PDF::loadView('certificate.pdf', compact('certificate'))
             ->setPaper('A4', 'landscape')
             ->setOptions([
-                'dpi' => 150,
-                'defaultFont' => 'serif',
-                'isHtml5ParserEnabled' => true,
+                'dpi' => 96, // Lower DPI for better compatibility
+                'defaultFont' => 'DejaVu Sans',
+                'isHtml5ParserEnabled' => false, // Disable for better compatibility
                 'isPhpEnabled' => true,
-                'isRemoteEnabled' => true
+                'isRemoteEnabled' => false,
+                'enable_font_subsetting' => false,
+                'pdf_backend' => 'CPDF',
+                'tempDir' => storage_path('app/temp'),
             ]);
-        
+
         return $pdf->download('certificate-' . $certificate->certificate_number . '.pdf');
     }
+
 
     public function verify($verificationCode)
     {

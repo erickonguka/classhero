@@ -128,6 +128,7 @@
 
                 <!-- Questions -->
                 <form id="quiz-form">
+                    @csrf
                     @foreach($quiz->questions as $index => $question)
                         <div class="question-slide {{ $index === 0 ? 'block' : 'hidden' }}" data-question="{{ $index + 1 }}">
                             <div class="mb-6">
@@ -220,27 +221,20 @@ $(document).ready(function() {
     let attemptId = null;
 
     // Start quiz
-    $('#start-quiz').on('click', function() {
-        $.ajax({
-            url: '{{ route("quiz.start", $quiz) }}',
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                attemptId = response.attempt_id;
-                $('.bg-white.dark\\:bg-gray-800.rounded-xl.shadow-lg.p-8.mb-8').hide();
-                $('#quiz-interface').removeClass('hidden');
-                
-                if (timeLimit > 0) {
-                    startTimer();
-                }
-                updateProgress();
-            },
-            error: function() {
-                alert('Error starting quiz. Please try again.');
+    $('#start-quiz').on('click', async function() {
+        try {
+            const response = await AjaxUtils.makeRequest('POST', '{{ route("quiz.start", $quiz) }}');
+            attemptId = response.attempt_id;
+            $('.bg-white.dark\\:bg-gray-800.rounded-xl.shadow-lg.p-8.mb-8').hide();
+            $('#quiz-interface').removeClass('hidden');
+            
+            if (timeLimit > 0) {
+                startTimer();
             }
-        });
+            updateProgress();
+        } catch (error) {
+            toastr.error('Error starting quiz. Please try again.');
+        }
     });
 
     // Timer
@@ -289,27 +283,18 @@ $(document).ready(function() {
         submitQuiz();
     });
 
-    function submitQuiz() {
+    async function submitQuiz() {
         if (timerInterval) {
             clearInterval(timerInterval);
         }
 
-        let formData = $('#quiz-form').serialize();
-        
-        $.ajax({
-            url: '{{ route("quiz.submit", $quiz) }}',
-            method: 'POST',
-            data: formData,
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                showResults(response);
-            },
-            error: function() {
-                alert('Error submitting quiz. Please try again.');
-            }
-        });
+        try {
+            const formData = new FormData(document.getElementById('quiz-form'));
+            const response = await AjaxUtils.makeRequest('POST', '{{ route("quiz.submit", $quiz) }}', formData);
+            showResults(response);
+        } catch (error) {
+            toastr.error('Error submitting quiz. Please try again.');
+        }
     }
 
     function showResults(results) {
