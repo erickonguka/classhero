@@ -29,22 +29,10 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
         
-        // Check if user needs MFA
-        if ($user->isAdmin() && $user->two_factor_secret) {
+        if ($user->isAdmin()) {
             return redirect()->route('mfa.show');
-        } elseif ($user->isTeacher()) {
-            return redirect()->route('mfa.show');
-        } elseif ($user->isLearner() && !$user->hasVerifiedEmail()) {
-            return redirect()->route('verification.notice');
         }
-
-        // Direct login for users without MFA requirements
-        if ($user->isTeacher()) {
-            return redirect()->intended(route('teacher.dashboard'));
-        } elseif ($user->isAdmin()) {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-
+        
         return redirect()->intended(route('dashboard'));
     }
 

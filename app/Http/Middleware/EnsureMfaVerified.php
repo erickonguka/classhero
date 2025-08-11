@@ -16,8 +16,8 @@ class EnsureMfaVerified
             return redirect()->route('login');
         }
         
-        // Check if MFA is required for admins and teachers
-        if (in_array($user->role, ['admin', 'teacher']) && !session('mfa_verified')) {
+        // Check if MFA is required for admins
+        if ($user->isAdmin() && !session('2fa_verified')) {
             return redirect()->route('mfa.show');
         }
         

@@ -233,6 +233,8 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->prefix('admin')->name('
         return view('admin.mfa-setup');
     })->name('mfa-setup');
     
+
+    
     // Certificate management
     Route::get('/certificates', [App\Http\Controllers\Admin\UserController::class, 'certificates'])->name('certificates.index');
     Route::get('/certificates/{certificate}/view', [App\Http\Controllers\Admin\UserController::class, 'viewCertificate'])->name('certificates.view');
@@ -264,9 +266,7 @@ Route::post('/webhook/payment', [PaymentController::class, 'webhook'])->name('pa
 // MFA routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/mfa', [App\Http\Controllers\Auth\MfaController::class, 'showMfaForm'])->name('mfa.show');
-    Route::post('/mfa/authenticator', [App\Http\Controllers\Auth\MfaController::class, 'verifyAuthenticator'])->name('mfa.verify.authenticator');
-    Route::post('/mfa/send-email', [App\Http\Controllers\Auth\MfaController::class, 'sendEmailOtp'])->name('mfa.send.email');
-    Route::post('/mfa/verify-email', [App\Http\Controllers\Auth\MfaController::class, 'verifyEmailOtp'])->name('mfa.verify.email');
+    Route::post('/mfa/verify', [App\Http\Controllers\Auth\MfaController::class, 'verifyAuthenticator'])->name('mfa.verify.authenticator');
 });
 
 require __DIR__.'/auth.php';
