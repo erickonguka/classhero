@@ -36,17 +36,14 @@ class ReviewController extends Controller
         $course->update(['rating' => round($avgRating, 1)]);
 
         // Notify course author about new review
-        \App\Models\Notification::create([
-            'user_id' => $course->teacher_id,
+        $course->teacher->notify(new \App\Notifications\SystemNotification([
             'title' => 'New Course Review',
             'message' => Auth::user()->name . ' rated your course "' . $course->title . '" ' . $request->rating . ' stars.',
             'type' => 'course_review',
-            'data' => json_encode([
-                'course_id' => $course->id,
-                'rating' => $request->rating,
-                'reviewer_name' => Auth::user()->name
-            ])
-        ]);
+            'course_id' => $course->id,
+            'rating' => $request->rating,
+            'reviewer_name' => Auth::user()->name
+        ]));
 
         if ($request->wantsJson()) {
             return response()->json([

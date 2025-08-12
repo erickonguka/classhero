@@ -16,11 +16,26 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Users</p>
-                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ number_format($stats['total_users']) }}</p>
-                    <div class="flex space-x-4 mt-1 text-xs text-gray-500">
-                        <span>{{ $stats['total_learners'] }} Learners</span>
-                        <span>| {{ $stats['total_teachers'] }} Teachers</span>
-                        <span>| {{ $stats['total_admins'] }} Admins</span>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                        {{ number_format($stats['total_users']) }}
+                    </p>
+
+                    <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-1 text-sm">
+                        <span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <span class="font-semibold">{{ number_format($stats['total_learners']) }}</span> Learners
+                        </span>
+
+                        <span class="hidden sm:inline w-px h-4 bg-gray-300 dark:bg-gray-600"></span>
+
+                        <span class="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                            <span class="font-semibold">{{ number_format($stats['total_teachers']) }}</span> Teachers
+                        </span>
+
+                        <span class="hidden sm:inline w-px h-4 bg-gray-300 dark:bg-gray-600"></span>
+
+                        <span class="flex items-center gap-1 text-yellow-600 dark:text-yellow-400">
+                            <span class="font-semibold">{{ number_format($stats['total_admins']) }}</span> Admins
+                        </span>
                     </div>
                 </div>
             </div>
@@ -129,7 +144,7 @@
                                 <span class="text-white text-sm font-bold">{{ substr($user->name, 0, 1) }}</span>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $user->name }}</p>
+                                <a href="{{ route('admin.users.show', $user->id) }}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 transition-colors">{{ $user->name }}</a>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
                             </div>
                         </div>
@@ -147,8 +162,8 @@
                 @foreach($recentCourses as $course)
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $course->title }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">by {{ $course->teacher->name }}</p>
+                            <a href="{{ route('admin.courses.show', $course->slug) }}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 transition-colors">{{ $course->title }}</a>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">by <a href="{{ route('admin.users.show', $course->teacher->id) }}" class="hover:text-blue-600 transition-colors">{{ $course->teacher->name }}</a></p>
                         </div>
                         <span class="px-2 py-1 text-xs rounded-full {{ $course->status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
                             {{ ucfirst($course->status) }}

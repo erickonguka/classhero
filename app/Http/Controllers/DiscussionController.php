@@ -116,37 +116,32 @@ class DiscussionController extends Controller
 
         // Create notification for course teacher (if not the teacher posting)
         if (Auth::id() !== $lesson->course->teacher_id) {
-            \App\Models\Notification::create([
-                'user_id' => $lesson->course->teacher_id,
+            $lesson->course->teacher->notify(new \App\Notifications\SystemNotification([
                 'title' => 'New Comment on Your Course',
-                'message' => Auth::user()->name . ' commented on "' . $lesson->title . '" in your course "' . $lesson->course->title . '"',
+                'message' => Auth::user()->name . ' commented on "' . $lesson->title . '"',
                 'type' => 'comment',
-                'data' => json_encode([
-                    'lesson_id' => $lesson->id,
-                    'course_id' => $lesson->course_id,
-                    'discussion_id' => $discussion->id,
-                    'user_name' => Auth::user()->name
-                ])
-            ]);
+                'lesson_id' => $lesson->id,
+                'course_id' => $lesson->course_id,
+                'discussion_id' => $discussion->id,
+                'user_name' => Auth::user()->name,
+                'course_title' => $lesson->course->title
+            ]));
         }
 
         // If replying to someone, notify the original commenter
         if ($request->parent_id) {
             $parentDiscussion = Discussion::find($request->parent_id);
             if ($parentDiscussion && $parentDiscussion->user_id !== Auth::id()) {
-                \App\Models\Notification::create([
-                    'user_id' => $parentDiscussion->user_id,
+                $parentDiscussion->user->notify(new \App\Notifications\SystemNotification([
                     'title' => 'Reply to Your Comment',
                     'message' => Auth::user()->name . ' replied to your comment on "' . $lesson->title . '"',
                     'type' => 'reply',
-                    'data' => json_encode([
-                        'lesson_id' => $lesson->id,
-                        'course_id' => $lesson->course_id,
-                        'discussion_id' => $discussion->id,
-                        'parent_discussion_id' => $request->parent_id,
-                        'user_name' => Auth::user()->name
-                    ])
-                ]);
+                    'lesson_id' => $lesson->id,
+                    'course_id' => $lesson->course_id,
+                    'discussion_id' => $discussion->id,
+                    'parent_discussion_id' => $request->parent_id,
+                    'user_name' => Auth::user()->name
+                ]));
             }
         }
 

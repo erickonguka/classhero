@@ -95,17 +95,14 @@ class LessonController extends Controller
                 // Check if course is fully completed (all lessons done)
                 if ($enrollment->isFullyCompleted()) {
                     // Notify teacher for certificate approval
-                    \App\Models\Notification::create([
-                        'user_id' => $lesson->course->teacher_id,
+                    $lesson->course->teacher->notify(new \App\Notifications\SystemNotification([
                         'title' => 'Student Completed Course',
                         'message' => Auth::user()->name . ' has completed "' . $lesson->course->title . '" and is awaiting certificate approval.',
                         'type' => 'course_completion',
-                        'data' => json_encode([
-                            'course_id' => $lesson->course_id,
-                            'student_id' => Auth::id(),
-                            'student_name' => Auth::user()->name
-                        ])
-                    ]);
+                        'course_id' => $lesson->course_id,
+                        'student_id' => Auth::id(),
+                        'student_name' => Auth::user()->name
+                    ]));
                     
                     return response()->json([
                         'success' => true, 

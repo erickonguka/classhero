@@ -38,9 +38,9 @@
                                     $message = $data['message'] ?? 'No message';
                                 @endphp
                                 <div class="flex items-center space-x-2">
-                                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                                    <a href="{{ route('notifications.show', $notification->id) }}" class="text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600 transition-colors">
                                         {{ $title }}
-                                    </h3>
+                                    </a>
                                     @if(!$notification->read_at)
                                         <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">New</span>
                                     @endif

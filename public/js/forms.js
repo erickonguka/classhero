@@ -2,8 +2,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Handle all forms with data-ajax attribute
     document.querySelectorAll('form[data-ajax]').forEach(form => {
+        let isSubmitting = false;
+        
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Prevent double submission
+            if (isSubmitting) return;
+            isSubmitting = true;
             
             const submitButton = form.querySelector('button[type="submit"]');
             const originalText = submitButton.textContent;
@@ -56,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset button state
                 submitButton.disabled = false;
                 submitButton.innerHTML = originalText;
+                isSubmitting = false;
             }
         });
     });

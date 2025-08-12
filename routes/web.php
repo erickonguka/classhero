@@ -232,6 +232,8 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->prefix('admin')->name('
     Route::get('/mfa-setup', function() {
         return view('admin.mfa-setup');
     })->name('mfa-setup');
+    Route::post('/mfa/regenerate-codes', [App\Http\Controllers\Auth\MfaController::class, 'regenerateRecoveryCodes'])->name('mfa.regenerate-codes');
+    Route::post('/mfa/disable', [App\Http\Controllers\Auth\MfaController::class, 'disableMfa'])->name('mfa.disable');
     
 
     

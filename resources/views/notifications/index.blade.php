@@ -35,8 +35,9 @@
                                             <a href="{{ route('notifications.show', $notification->id) }}" class="text-base sm:text-lg font-medium text-gray-900 dark:text-white hover:text-blue-600 transition-colors truncate">
                                                 @php
                                                     $data = is_string($notification->data) ? json_decode($notification->data, true) : $notification->data;
+                                                    $title = $data['title'] ?? $data['data']['title'] ?? 'Notification';
                                                 @endphp
-                                                {{ $notification->title ?? $data['title'] ?? $notification->data['title'] ?? 'Notification' }}
+                                                {{ $title }}
                                             </a>
                                             @if(!$notification->read_at)
                                                 <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full self-start">New</span>
@@ -44,9 +45,9 @@
                                         </div>
                                         <p class="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base">
                                             @php
-                                                $data = is_string($notification->data) ? json_decode($notification->data, true) : $notification->data;
+                                                $message = $data['message'] ?? $data['data']['message'] ?? 'No message';
                                             @endphp
-                                            {{ strip_tags($notification->message ?? $data['message'] ?? $notification->data['message'] ?? 'No message') }}
+                                            {{ strip_tags($message) }}
                                         </p>
                                         <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mt-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                             <span>{{ $notification->created_at->diffForHumans() }}</span>

@@ -93,7 +93,7 @@
                                         </div>
                                     @endif
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $user->name }}</div>
+                                        <a href="{{ route('admin.users.show', $user->id) }}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 transition-colors">{{ $user->name }}</a>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
                                         @if($user->country_code)
                                             <div class="text-xs text-gray-400 flex items-center mt-1">

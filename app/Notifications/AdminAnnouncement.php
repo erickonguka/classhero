@@ -20,18 +20,18 @@ class AdminAnnouncement extends Notification
 
     public function via($notifiable)
     {
-        return ['database'];
+        $channels = ['database'];
+        if ($this->data['send_email'] ?? false) {
+            $channels[] = 'mail';
+        }
+        return $channels;
     }
     
     public function toMail($notifiable)
     {
         return (new MailMessage)
                     ->subject($this->data['title'])
-                    ->greeting('Hello ' . $notifiable->name . '!')
-                    ->line($this->data['message'])
-                    ->line('This message was sent by: ' . $this->data['sender'])
-                    ->action('Visit ClassHero', url('/'))
-                    ->line('Thank you for using ClassHero!');
+                    ->view('emails.notification', ['data' => $this->data]);
     }
 
     public function toArray($notifiable)

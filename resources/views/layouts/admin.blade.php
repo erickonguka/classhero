@@ -177,7 +177,7 @@
                                         </div>
                                     </div>
                                     <div class="max-h-64 overflow-y-auto">
-                                        @forelse(auth()->user()->notifications->take(5) as $notification)
+                                        @forelse(auth()->user()->notifications()->latest()->take(5)->get() as $notification)
                                             <a href="{{ route('notifications.show', $notification->id) }}" class="block p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 {{ $notification->read_at ? '' : 'bg-blue-50 dark:bg-blue-900/20' }}">
                                                 @php
                                                     $data = is_string($notification->data) ? json_decode($notification->data, true) : $notification->data;
@@ -194,7 +194,7 @@
                                             </div>
                                         @endforelse
                                     </div>
-                                    @if(auth()->user()->notifications->count() > 5)
+                                    @if(auth()->user()->notifications()->count() > 5)
                                         <div class="p-3 border-t border-gray-200 dark:border-gray-700">
                                             <a href="{{ route('notifications.index') }}" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
                                                 View all notifications

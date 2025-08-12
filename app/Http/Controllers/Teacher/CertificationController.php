@@ -114,17 +114,14 @@ class CertificationController extends Controller
         ]);
 
         // Notify learner about certificate approval
-        \App\Models\Notification::create([
-            'user_id' => $enrollment->user_id,
+        $enrollment->user->notify(new \App\Notifications\SystemNotification([
             'title' => 'Certificate Approved!',
             'message' => 'Congratulations! Your certificate for "' . $enrollment->course->title . '" has been approved and is now available for download.',
             'type' => 'certificate_approved',
-            'data' => json_encode([
-                'course_id' => $enrollment->course_id,
-                'certificate_id' => $certificate->id,
-                'course_title' => $enrollment->course->title
-            ])
-        ]);
+            'course_id' => $enrollment->course_id,
+            'certificate_id' => $certificate->id,
+            'course_title' => $enrollment->course->title
+        ]));
 
         return response()->json([
             'success' => true,

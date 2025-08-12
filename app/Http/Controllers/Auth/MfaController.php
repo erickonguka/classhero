@@ -49,4 +49,30 @@ class MfaController extends Controller
         
         return back()->withErrors(['code' => 'Invalid authentication code']);
     }
+    
+    public function regenerateRecoveryCodes(Request $request)
+    {
+        $user = Auth::user();
+        $recoveryCodes = [];
+        for ($i = 0; $i < 8; $i++) {
+            $recoveryCodes[] = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8));
+        }
+        
+        $user->update(['two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes))]);
+        return response()->json(['success' => true, 'codes' => $recoveryCodes]);
+    }
+    
+    public function disableMfa(Request $request)
+    {
+        $request->validate(['password' => 'required|current_password']);
+        $user = Auth::user();
+        
+        $user->update([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'mfa_enabled' => false
+        ]);
+        
+        return response()->json(['success' => true]);
+    }
 }

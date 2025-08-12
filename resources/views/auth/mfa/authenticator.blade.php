@@ -19,7 +19,7 @@
             
             <div class="text-center mb-6">
                 <div class="bg-white p-4 rounded-lg border mb-4">
-                    <div id="qrcode" class="mx-auto"></div>
+                    <div id="qrcode" class="flex justify-center"></div>
                 </div>
                 <code class="text-sm bg-gray-100 p-2 rounded">{{ $secretKey }}</code>
             </div>

@@ -70,13 +70,13 @@
                                             </div>
                                         @endif
                                         <div class="ml-3">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ Str::limit($course->title, 30) }}</div>
+                                            <a href="{{ route('admin.courses.show', $course->slug) }}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 transition-colors">{{ Str::limit($course->title, 30) }}</a>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">{{ $course->category->name }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400 md:hidden">by {{ $course->teacher->name }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 md:hidden">by <a href="{{ route('admin.users.show', $course->teacher->id) }}" class="hover:text-blue-600 transition-colors">{{ $course->teacher->name }}</a></div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white hidden md:table-cell">{{ $course->teacher->name }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white hidden md:table-cell"><a href="{{ route('admin.users.show', $course->teacher->id) }}" class="hover:text-blue-600 transition-colors">{{ $course->teacher->name }}</a></td>
                                 <td class="px-6 py-4">
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full
                                         {{ $course->status === 'published' ? 'bg-green-100 text-green-800' : '' }}

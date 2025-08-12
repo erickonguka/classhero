@@ -12,7 +12,7 @@ class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = auth()->user()->notifications()->paginate(20);
+        $notifications = auth()->user()->notifications()->latest()->paginate(20);
         return view('admin.notifications.index', compact('notifications'));
     }
 
@@ -48,15 +48,20 @@ class NotificationController extends Controller
             'send_email' => $validated['send_email'] ?? false
         ];
 
+        // Create admin notification record
+        $adminNotification = auth()->user()->notifications()->create([
+            'id' => \Illuminate\Support\Str::uuid(),
+            'type' => 'App\Notifications\AdminAnnouncement',
+            'data' => $notificationData,
+            'read_at' => null
+        ]);
+
         // Use chunked processing to prevent timeout
         $userCount = $usersQuery->count();
-        $usersQuery->chunk(50, function ($userChunk) use ($notificationData, $validated) {
+        $usersQuery->chunk(50, function ($userChunk) use ($notificationData) {
             foreach ($userChunk as $user) {
                 try {
                     $user->notify(new AdminAnnouncement($notificationData));
-                    if ($validated['send_email'] ?? false) {
-                        \App\Jobs\SendNotificationEmail::dispatch($user, $notificationData);
-                    }
                 } catch (\Exception $e) {
                     \Log::error('Failed to send notification to user ' . $user->id . ': ' . $e->getMessage());
                 }
@@ -66,11 +71,12 @@ class NotificationController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Notification sent to ' . $userCount . ' users successfully!'
+                'message' => 'Notification sent to ' . $userCount . ' users successfully!',
+                'redirect_url' => route('notifications.show', $adminNotification->id)
             ]);
         }
 
-        return redirect()->route('admin.notifications.index')
+        return redirect()->route('notifications.show', $adminNotification->id)
             ->with('success', 'Notification sent to ' . $userCount . ' users successfully!');
     }
 
