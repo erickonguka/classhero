@@ -162,8 +162,13 @@
                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                                       placeholder="Ask a question or share your thoughts about this lesson..."></textarea>
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Attach Media</label>
-                                <div class="flex flex-wrap gap-2 mb-3">
+                                <div class="flex items-center justify-between mb-3">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Attach Media</label>
+                                    <button type="button" id="add-media-btn" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
+                                        + Add Media
+                                    </button>
+                                </div>
+                                <div id="media-buttons" class="hidden flex flex-wrap gap-2 mb-3">
                                     <button type="button" id="upload-file-btn" class="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-all duration-200 transform hover:scale-105">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                         <span>Upload</span>
@@ -395,9 +400,141 @@
     </div>
 </div> 
 
+<!-- AI Assistant Dialog -->
+<div id="ai-dialog" class="fixed bottom-4 right-4 w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-50 transition-all duration-500 ease-out transform translate-y-4 opacity-0 scale-95 hidden backdrop-blur-sm">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-t-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 dark:text-white text-lg">AI Tutor</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Here to help with this lesson</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="maximize-ai" class="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-all duration-200 hover:bg-white dark:hover:bg-gray-600 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+                </svg>
+            </button>
+            <button id="minimize-ai" class="p-2 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 transition-all duration-200 hover:bg-white dark:hover:bg-gray-600 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Chat Container -->
+    <div id="ai-chat-container" class="flex flex-col">
+        <!-- Messages Area -->
+        <div id="ai-messages" class="flex-1 p-6 overflow-y-auto space-y-4 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 min-h-96 max-h-96">
+            <div class="flex items-start space-x-3 animate-fade-in">
+                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                </div>
+                <div class="bg-white dark:bg-gray-700 rounded-2xl rounded-tl-md p-4 shadow-sm border border-gray-100 dark:border-gray-600 max-w-sm">
+                    <p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">👋 Hi! I'm your AI tutor. Ask me anything about this lesson and I'll help you understand the material better.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Input Area -->
+        <div class="p-6 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 rounded-b-2xl">
+            <form id="ai-chat-form" class="flex space-x-3">
+                <div class="flex-1 relative">
+                    <input type="text" id="ai-message-input" placeholder="Ask about this lesson..." 
+                           class="w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-all duration-200 shadow-sm">
+                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <button type="submit" id="ai-send-btn" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- AI Toggle Button -->
+<button id="ai-toggle" class="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-110 z-40 animate-bounce">
+    <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+    </svg>
+    <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full animate-ping"></div>
+    <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full"></div>
+</button>
 
 @include('components.review-modal')
 @endsection
+
+@push('styles')
+<style>
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+}
+
+#ai-dialog {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#ai-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#ai-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#ai-messages::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 3px;
+}
+
+#ai-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.7);
+}
+
+.dark #ai-messages::-webkit-scrollbar-thumb {
+    background: rgba(75, 85, 99, 0.5);
+}
+
+.dark #ai-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(75, 85, 99, 0.7);
+}
+
+#ai-toggle {
+    animation: bounce 2s infinite;
+}
+
+#ai-toggle:hover {
+    animation: none;
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -409,6 +546,22 @@ $(document).ready(function() {
     let discussionRecordingTimer;
     let discussionRecordingSeconds = 0;
     let discussionRecordingType = '';
+
+    let mediaButtonsVisible = false;
+    
+    $('#add-media-btn').on('click', function() {
+        if (!mediaButtonsVisible) {
+            $('#media-buttons').removeClass('hidden').hide().slideDown(300);
+            $(this).text('- Hide Media').addClass('text-red-600').removeClass('text-blue-600');
+            mediaButtonsVisible = true;
+        } else {
+            $('#media-buttons').slideUp(300, function() {
+                $(this).addClass('hidden');
+            });
+            $(this).text('+ Add Media').removeClass('text-red-600').addClass('text-blue-600');
+            mediaButtonsVisible = false;
+        }
+    });
 
     $('#upload-file-btn').on('click', function() {
         $('#media-upload').click();
@@ -838,6 +991,146 @@ $(document).ready(function() {
         loadDiscussions();
         updateCommentCount();
     @endauth
+
+    // AI Assistant functionality
+    let isAiMaximized = false;
+    
+    $('#ai-toggle').on('click', function() {
+        const dialog = $('#ai-dialog');
+        if (dialog.hasClass('hidden')) {
+            dialog.removeClass('hidden');
+            setTimeout(() => {
+                dialog.removeClass('translate-y-4 opacity-0 scale-95').addClass('translate-y-0 opacity-100 scale-100');
+            }, 10);
+            $(this).addClass('hidden');
+        }
+    });
+    
+    $('#minimize-ai').on('click', function() {
+        const dialog = $('#ai-dialog');
+        dialog.removeClass('translate-y-0 opacity-100 scale-100').addClass('translate-y-4 opacity-0 scale-95');
+        setTimeout(() => {
+            dialog.addClass('hidden');
+            $('#ai-toggle').removeClass('hidden');
+            if (isAiMaximized) {
+                isAiMaximized = false;
+                dialog.removeClass('fixed inset-6 w-auto h-auto max-w-4xl mx-auto').addClass('fixed bottom-4 right-4 w-96');
+                $('#ai-messages').removeClass('min-h-[70vh] max-h-[70vh]').addClass('min-h-96 max-h-96');
+            }
+        }, 500);
+    });
+    
+    $('#maximize-ai').on('click', function() {
+        const dialog = $('#ai-dialog');
+        if (!isAiMaximized) {
+            isAiMaximized = true;
+            dialog.removeClass('fixed bottom-4 right-4 w-96').addClass('fixed inset-6 w-auto h-auto max-w-4xl mx-auto');
+            $('#ai-messages').removeClass('min-h-96 max-h-96').addClass('min-h-[70vh] max-h-[70vh]');
+        } else {
+            isAiMaximized = false;
+            dialog.removeClass('fixed inset-6 w-auto h-auto max-w-4xl mx-auto').addClass('fixed bottom-4 right-4 w-96');
+            $('#ai-messages').removeClass('min-h-[70vh] max-h-[70vh]').addClass('min-h-96 max-h-96');
+        }
+    });
+    
+    $('#ai-chat-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const message = $('#ai-message-input').val().trim();
+        if (!message) return;
+        
+        const sendBtn = $('#ai-send-btn');
+        const messageInput = $('#ai-message-input');
+        
+        // Disable form
+        sendBtn.prop('disabled', true).addClass('opacity-50');
+        messageInput.prop('disabled', true);
+        
+        // Add user message to chat
+        addAiMessage(message, 'user');
+        messageInput.val('');
+        
+        // Show typing indicator
+        const typingId = addAiMessage('🤔 Thinking...', 'ai', true);
+        
+        // Send to AI
+        $.ajax({
+            url: '{{ route("lessons.ai-chat", $lesson) }}',
+            method: 'POST',
+            data: {
+                message: message,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                // Remove typing indicator
+                $(`#${typingId}`).remove();
+                
+                if (response.success) {
+                    addAiMessage(response.response, 'ai');
+                } else {
+                    addAiMessage('❌ Sorry, I encountered an error. Please try again.', 'ai');
+                }
+            },
+            error: function() {
+                // Remove typing indicator
+                $(`#${typingId}`).remove();
+                addAiMessage('⚠️ Sorry, I\'m having trouble connecting. Please try again later.', 'ai');
+            },
+            complete: function() {
+                // Re-enable form
+                sendBtn.prop('disabled', false).removeClass('opacity-50');
+                messageInput.prop('disabled', false).focus();
+            }
+        });
+    });
+    
+    function addAiMessage(message, sender, isTyping = false) {
+        const messageId = 'msg-' + Date.now();
+        const isUser = sender === 'user';
+        const alignment = isUser ? 'justify-end' : 'justify-start';
+        
+        const avatar = isUser ? 
+            `<div class="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                <span class="text-white text-sm font-bold">${'{{ auth()->user()->name ?? "U" }}'.charAt(0)}</span>
+            </div>` :
+            `<div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                </svg>
+            </div>`;
+        
+        const messageContent = isUser ?
+            `<div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl rounded-br-md p-4 shadow-md max-w-sm ml-auto">
+                <p class="text-sm leading-relaxed">${message}</p>
+            </div>` :
+            `<div class="bg-white dark:bg-gray-700 rounded-2xl rounded-tl-md p-4 shadow-sm border border-gray-100 dark:border-gray-600 max-w-sm">
+                <p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">${message}</p>
+                ${isTyping ? `<div class="flex space-x-1 mt-2">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                </div>` : ''}
+            </div>`;
+        
+        const messageHtml = `
+            <div id="${messageId}" class="flex items-start space-x-3 ${alignment} animate-fade-in opacity-0" style="animation-delay: 100ms">
+                ${!isUser ? avatar : ''}
+                ${messageContent}
+                ${isUser ? avatar : ''}
+            </div>
+        `;
+        
+        $('#ai-messages').append(messageHtml);
+        
+        // Trigger animation
+        setTimeout(() => {
+            $(`#${messageId}`).removeClass('opacity-0');
+        }, 50);
+        
+        $('#ai-messages').scrollTop($('#ai-messages')[0].scrollHeight);
+        
+        return messageId;
+    }
 
     // Global function to show review modal
     window.showReviewModal = function(courseId) {

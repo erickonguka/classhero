@@ -69,6 +69,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // Video tracking
     Route::post('/lessons/{lesson}/video-progress', [App\Http\Controllers\VideoTrackingController::class, 'updateProgress'])->name('lessons.video-progress');
+    
+    // AI Assistant
+    Route::post('/lessons/{lesson}/ai-chat', [App\Http\Controllers\AiAssistantController::class, 'chat'])->name('lessons.ai-chat');
 
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
